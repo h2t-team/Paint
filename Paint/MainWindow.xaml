@@ -1,0 +1,70 @@
+﻿<Fluent:RibbonWindow x:Class="Paint.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Paint"
+        xmlns:Fluent="clr-namespace:Fluent;assembly=Fluent"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        mc:Ignorable="d"
+        Title="Batch Rename" Height="600" Width="900"
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        TextElement.FontWeight="Regular"
+        TextElement.FontSize="13"
+        TextOptions.TextFormattingMode="Ideal"
+        TextOptions.TextRenderingMode="Auto"
+        Name="Main"
+        Background="{DynamicResource MaterialDesignPaper}"
+        FontFamily="{DynamicResource MaterialDesignFont}"
+        WindowStartupLocation="Manual"
+        MinHeight="600"
+        MinWidth="900">
+    <DockPanel LastChildFill="True">
+        <Fluent:Ribbon DockPanel.Dock="Top">
+            <Fluent:Ribbon.Menu>
+                <Fluent:Backstage Header="File">
+                    <Fluent:BackstageTabControl>
+                        <Fluent:BackstageTabItem Header="New"></Fluent:BackstageTabItem>
+                        <Fluent:BackstageTabItem Header="Open"></Fluent:BackstageTabItem>
+                        <Fluent:BackstageTabItem Header="Save"></Fluent:BackstageTabItem>
+                        <Fluent:BackstageTabItem Header="Exit"></Fluent:BackstageTabItem>
+                    </Fluent:BackstageTabControl>
+                </Fluent:Backstage>
+            </Fluent:Ribbon.Menu>
+            <Fluent:RibbonTabItem Header="Home">
+                <Fluent:RibbonGroupBox Header="Shape">
+                    <Fluent:DropDownButton Header="Shape">
+                        <Fluent:DropDownButton.Icon>
+                            <materialDesign:PackIcon Kind="SquareOutline"
+                                                     Height="30" Width="30"/>
+                        </Fluent:DropDownButton.Icon>
+                        <Fluent:Button Header="Line">
+                            <Fluent:Button.LargeIcon>
+                                <materialDesign:PackIcon Kind="VectorLine"
+                                                     Height="30" Width="30"/>
+                            </Fluent:Button.LargeIcon>
+                        </Fluent:Button>
+                        <Fluent:Button Header="Square">
+                            <Fluent:Button.LargeIcon>
+                                <materialDesign:PackIcon Kind="SquareOutline"
+                                                     Height="30" Width="30"/>
+                            </Fluent:Button.LargeIcon>
+                        </Fluent:Button>
+                        <Fluent:Button Header="Triangle">
+                            <Fluent:Button.LargeIcon>
+                                <materialDesign:PackIcon Kind="TriangleOutline"
+                                                     Height="30" Width="30"/>
+                            </Fluent:Button.LargeIcon>
+                        </Fluent:Button>
+                    </Fluent:DropDownButton>
+                </Fluent:RibbonGroupBox>
+            </Fluent:RibbonTabItem>
+        </Fluent:Ribbon>
+        <Grid>
+            <Canvas x:Name="canvas" Background="White">
+            </Canvas>
+            <Border Background="Transparent">
+            </Border>
+        </Grid>
+    </DockPanel>
+</Fluent:RibbonWindow>
