@@ -18,7 +18,8 @@
         FontFamily="{DynamicResource MaterialDesignFont}"
         WindowStartupLocation="Manual"
         MinHeight="600"
-        MinWidth="900">
+        MinWidth="900"
+        Loaded="Window_Loaded">
     <DockPanel LastChildFill="True">
         <Fluent:Ribbon DockPanel.Dock="Top">
             <Fluent:Ribbon.Menu>
@@ -32,38 +33,49 @@
                 </Fluent:Backstage>
             </Fluent:Ribbon.Menu>
             <Fluent:RibbonTabItem Header="Home">
-                <Fluent:RibbonGroupBox Header="Shape">
-                    <Fluent:DropDownButton Header="Shape">
+                <Fluent:RibbonGroupBox Header="Shapes">
+                    <!--<Fluent:DropDownButton Header="Shape">
                         <Fluent:DropDownButton.Icon>
                             <materialDesign:PackIcon Kind="SquareOutline"
                                                      Height="30" Width="30"/>
-                        </Fluent:DropDownButton.Icon>
-                        <Fluent:Button Header="Line">
+                        </Fluent:DropDownButton.Icon>-->
+                    <Fluent:Button Header="Line" Name="Line2DBtn" Tag="Line2D">
                             <Fluent:Button.LargeIcon>
                                 <materialDesign:PackIcon Kind="VectorLine"
                                                      Height="30" Width="30"/>
                             </Fluent:Button.LargeIcon>
                         </Fluent:Button>
-                        <Fluent:Button Header="Square">
+                    <Fluent:Button Header="Rectangle" Name="Rectangle2DBtn" Tag="Rectangle2D">
                             <Fluent:Button.LargeIcon>
-                                <materialDesign:PackIcon Kind="SquareOutline"
-                                                     Height="30" Width="30"/>
+                                <materialDesign:PackIcon 
+                                    Kind="RectangleOutline"
+                                    Height="30" Width="30"/>
                             </Fluent:Button.LargeIcon>
                         </Fluent:Button>
-                        <Fluent:Button Header="Triangle">
+                    <Fluent:Button Header="Ellipse" Name="Ellipse2DBtn" Tag="Ellipse2D">
                             <Fluent:Button.LargeIcon>
-                                <materialDesign:PackIcon Kind="TriangleOutline"
-                                                     Height="30" Width="30"/>
+                                <materialDesign:PackIcon 
+                                    Kind="EllipseOutline"
+                                    Height="30" Width="30"/>
                             </Fluent:Button.LargeIcon>
                         </Fluent:Button>
-                    </Fluent:DropDownButton>
+                    <Fluent:Button Header="Triangle">
+                        <Fluent:Button.LargeIcon>
+                            <materialDesign:PackIcon 
+                                    Kind="TriangleOutline"
+                                    Height="30" Width="30"/>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                    <!--</Fluent:DropDownButton>-->
                 </Fluent:RibbonGroupBox>
             </Fluent:RibbonTabItem>
         </Fluent:Ribbon>
         <Grid>
             <Canvas x:Name="canvas" Background="White">
             </Canvas>
-            <Border Background="Transparent">
+            <Border 
+                Background="Transparent" 
+                Name="CanvasArea">
             </Border>
         </Grid>
     </DockPanel>
