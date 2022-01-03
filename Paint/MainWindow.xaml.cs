@@ -35,6 +35,46 @@ namespace Paint
             InitializeComponent();
         }
 
+        private void canvas_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            //clone shape of preview with selected shape
+            _preview = _prototypes[_selectedShapeName].Clone();
+            _isDrawing = true;
+            //get start positon and save in HandleStart of preview
+            Point position = e.GetPosition(canvas);
+            _preview.HandleStart(position.X, position.Y);
+        }
+
+        private void canvas_MouseMove(object sender, MouseEventArgs e)
+        {
+            //If drawing
+            if (_isDrawing)
+            {
+                Point position = e.GetPosition(canvas);
+                //get current position
+                _preview.HandleEnd(position.X, position.Y);
+                //Clear all drawings
+                canvas.Children.Clear();
+                //Redraw all shapes that was saved before
+                foreach (var shape in _shapes)
+                {
+                    UIElement element = shape.Draw();
+                    canvas.Children.Add(element);
+                }
+                //Draw preview
+                canvas.Children.Add(_preview.Draw());
+            }
+        }
+
+        private void canvas_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            _isDrawing = false;
+            //get end position and save in HandleEnd of preview
+            Point postion = e.GetPosition(canvas);
+            _preview.HandleEnd(postion.X, postion.Y);
+            //add preview to shapes
+            _shapes.Add(_preview);
+        }
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             // Khoan làm cái Line2D
