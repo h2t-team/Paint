@@ -75,7 +75,10 @@
             </Canvas>
             <Border 
                 Background="Transparent" 
-                Name="CanvasArea">
+                Name="CanvasArea"
+                MouseDown="canvas_MouseDown"
+                MouseMove="canvas_MouseMove"
+                MouseUp="canvas_MouseUp">
             </Border>
         </Grid>
     </DockPanel>
