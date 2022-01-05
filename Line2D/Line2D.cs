@@ -8,8 +8,8 @@ namespace Line2D
 {
     public class Line2D : IShape
     {   
-        private Point2D _start = new Point2D();
-        private Point2D _end = new Point2D();
+        private Point2D _start;
+        private Point2D _end;
 
         public string Name => "Line";
 
@@ -41,6 +41,14 @@ namespace Line2D
         public IShape Clone()
         {
             return new Line2D();
+        }
+        public Point2D GetStart()
+        {
+            return _start;
+        }
+        public Point2D GetEnd()
+        {
+            return _end;
         }
     }
 }

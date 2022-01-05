@@ -119,8 +119,14 @@ namespace Paint
                     case "Rectangle":
                         icon.Kind = PackIconKind.RectangleOutline;
                         break;
+                    case "Square":
+                        icon.Kind = PackIconKind.SquareOutline;
+                        break;
                     case "Ellipse":
                         icon.Kind = PackIconKind.EllipseOutline;
+                        break;
+                    case "Circle":
+                        icon.Kind = PackIconKind.CircleOutline;
                         break;
                     case "Triangle":
                         icon.Kind = PackIconKind.TriangleOutline;
@@ -131,11 +137,14 @@ namespace Paint
                     case "Diamond":
                         icon.Kind = PackIconKind.RhombusOutline;
                         break;
+                    case "Hexagon": 
+                        icon.Kind = PackIconKind.HexagonOutline;
+                        break;
                     default:
                         break;
                 };
                 button.Click += prototypeButton_Click;
-                button.LargeIcon = icon;
+                button.Icon = icon;
                 ShapeGroupBox.Items.Add(button);
             }
 
@@ -149,7 +158,8 @@ namespace Paint
         }
         private void prototypeButton_Click(object sender, RoutedEventArgs e)
         {
-            _selectedShapeName = (sender as System.Windows.Controls.Button).Tag as string;
+            var Btn = sender as System.Windows.Controls.Button;
+            _selectedShapeName = Btn.Tag as string;
             _preview = _prototypes[_selectedShapeName];
         }
     }

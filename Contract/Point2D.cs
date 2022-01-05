@@ -46,5 +46,14 @@ namespace Contract
             X = x;
             Y = y;
         }
+
+        public Point2D GetStart()
+        {
+            return this;
+        }
+        public Point2D GetEnd()
+        {
+            return this;
+        }
     }
 }

@@ -33,7 +33,7 @@
                 </Fluent:Backstage>
             </Fluent:Ribbon.Menu>
             <Fluent:RibbonTabItem Header="Home">
-                <Fluent:RibbonGroupBox Header="Shapes" Name="ShapeGroupBox" MinWidth="60">
+                <Fluent:RibbonGroupBox Header="Shapes" Name="ShapeGroupBox" MinWidth="60" Padding="10">
                     <Fluent:Button 
                         Tag="Line" 
                         Click="prototypeButton_Click" 
