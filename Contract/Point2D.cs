@@ -29,7 +29,7 @@ namespace Contract
                 X2 = X,
                 Y2 = Y,
                 StrokeThickness = 1,
-                Stroke = new SolidColorBrush(Colors.Red)
+                Stroke = new SolidColorBrush(Colors.Black)
             };
 
             return l;

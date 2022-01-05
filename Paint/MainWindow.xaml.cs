@@ -16,6 +16,9 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using Button = Fluent.Button;
+using MaterialDesignThemes.Wpf;
+using System.Diagnostics;
 
 namespace Paint
 {
@@ -77,10 +80,10 @@ namespace Paint
         }
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            // Khoan làm cái Line2D
+            // load all the dlls
             string exePath = Assembly.GetExecutingAssembly().Location;
             string folder = System.IO.Path.GetDirectoryName(exePath);
-            var dlls = new DirectoryInfo(folder).GetFiles($"DLL/*.dll").Where(file =>  file.Name.Contains("2D"));
+            var dlls = new DirectoryInfo(folder).GetFiles($"DLL/*.dll").Where(file => file.Name.Contains("2D"));
 
             foreach (var dll in dlls)
             {
@@ -99,23 +102,49 @@ namespace Paint
                     }
                 }
             }
+
+            // add the shape buttons
             foreach (var item in _prototypes)
             {
-                var shape = item.Value;
+                IShape shape = item.Value;
+
+                Button button = new()
+                {
+                    Tag = shape.Name
+                };
+                button.SizeDefinition = "Small";
+                PackIcon icon = new();
                 switch (shape.Name)
                 {
                     case "Rectangle":
-                        Rectangle2DBtn.Tag = shape.Name;
-                        Rectangle2DBtn.Click += prototypeButton_Click;
+                        icon.Kind = PackIconKind.RectangleOutline;
                         break;
                     case "Ellipse":
-                        Ellipse2DBtn.Tag = shape.Name;
-                        Ellipse2DBtn.Click += prototypeButton_Click;
+                        icon.Kind = PackIconKind.EllipseOutline;
+                        break;
+                    case "Triangle":
+                        icon.Kind = PackIconKind.TriangleOutline;
+                        break;
+                    case "Right Triangle":
+                        icon.Kind = PackIconKind.NetworkStrengthOutline;
+                        break;
+                    case "Diamond":
+                        icon.Kind = PackIconKind.RhombusOutline;
+                        break;
+                    default:
                         break;
                 };
+                button.Click += prototypeButton_Click;
+                button.LargeIcon = icon;
+                ShapeGroupBox.Items.Add(button);
             }
 
-            _selectedShapeName = _prototypes.First().Value.Name;
+            // add the line shape
+            IShape lineShape = new Line2D.Line2D();
+            _prototypes.Add(lineShape.Name, lineShape);
+
+            // default selection
+            _selectedShapeName = lineShape.Name;
             _preview = _prototypes[_selectedShapeName].Clone();
         }
         private void prototypeButton_Click(object sender, RoutedEventArgs e)

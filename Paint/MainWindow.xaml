@@ -33,40 +33,15 @@
                 </Fluent:Backstage>
             </Fluent:Ribbon.Menu>
             <Fluent:RibbonTabItem Header="Home">
-                <Fluent:RibbonGroupBox Header="Shapes">
-                    <!--<Fluent:DropDownButton Header="Shape">
-                        <Fluent:DropDownButton.Icon>
-                            <materialDesign:PackIcon Kind="SquareOutline"
-                                                     Height="30" Width="30"/>
-                        </Fluent:DropDownButton.Icon>-->
-                    <Fluent:Button Header="Line" Name="Line2DBtn" Tag="Line2D">
-                            <Fluent:Button.LargeIcon>
-                                <materialDesign:PackIcon Kind="VectorLine"
-                                                     Height="30" Width="30"/>
-                            </Fluent:Button.LargeIcon>
-                        </Fluent:Button>
-                    <Fluent:Button Header="Rectangle" Name="Rectangle2DBtn" Tag="Rectangle2D">
-                            <Fluent:Button.LargeIcon>
-                                <materialDesign:PackIcon 
-                                    Kind="RectangleOutline"
-                                    Height="30" Width="30"/>
-                            </Fluent:Button.LargeIcon>
-                        </Fluent:Button>
-                    <Fluent:Button Header="Ellipse" Name="Ellipse2DBtn" Tag="Ellipse2D">
-                            <Fluent:Button.LargeIcon>
-                                <materialDesign:PackIcon 
-                                    Kind="EllipseOutline"
-                                    Height="30" Width="30"/>
-                            </Fluent:Button.LargeIcon>
-                        </Fluent:Button>
-                    <Fluent:Button Header="Triangle">
+                <Fluent:RibbonGroupBox Header="Shapes" Name="ShapeGroupBox" MinWidth="60">
+                    <Fluent:Button 
+                        Tag="Line" 
+                        Click="prototypeButton_Click" 
+                        SizeDefinition="Small">
                         <Fluent:Button.LargeIcon>
-                            <materialDesign:PackIcon 
-                                    Kind="TriangleOutline"
-                                    Height="30" Width="30"/>
+                            <materialDesign:PackIcon Kind="VectorLine"/>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
-                    <!--</Fluent:DropDownButton>-->
                 </Fluent:RibbonGroupBox>
             </Fluent:RibbonTabItem>
         </Fluent:Ribbon>
