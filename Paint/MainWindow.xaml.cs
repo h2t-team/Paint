@@ -1,10 +1,12 @@
 ﻿using Contract;
 using Fluent;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -71,12 +73,15 @@ namespace Paint
 
         private void canvas_MouseUp(object sender, MouseButtonEventArgs e)
         {
-            _isDrawing = false;
-            //get end position and save in HandleEnd of preview
-            Point postion = e.GetPosition(canvas);
-            _preview.HandleEnd(postion.X, postion.Y);
-            //add preview to shapes
-            _shapes.Add(_preview);
+            if (_isDrawing == true)
+            {
+                _isDrawing = false;
+                //get end position and save in HandleEnd of preview
+                Point postion = e.GetPosition(canvas);
+                _preview.HandleEnd(postion.X, postion.Y);
+                //add preview to shapes
+                _shapes.Add(_preview);
+            }
         }
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
@@ -137,7 +142,7 @@ namespace Paint
                     case "Diamond":
                         icon.Kind = PackIconKind.RhombusOutline;
                         break;
-                    case "Hexagon": 
+                    case "Hexagon":
                         icon.Kind = PackIconKind.HexagonOutline;
                         break;
                     default:
@@ -161,6 +166,82 @@ namespace Paint
             var Btn = sender as System.Windows.Controls.Button;
             _selectedShapeName = Btn.Tag as string;
             _preview = _prototypes[_selectedShapeName];
+        }
+
+        private void Export_Click(object sender, RoutedEventArgs e)
+        {
+            SaveFileDialog dialog = new SaveFileDialog();
+            dialog.Title = "Export";
+            dialog.Filter = "PNG (*.png)|*.png|JPG (*.jpg)|*.jpg";
+            if (dialog.ShowDialog() == true)
+            {
+                RenderTargetBitmap rtb = new RenderTargetBitmap((int)canvas.RenderSize.Width,
+               (int)canvas.RenderSize.Height, 96d, 96d, System.Windows.Media.PixelFormats.Default);
+                rtb.Render(canvas);
+                //check file extension
+                if (System.IO.Path.GetExtension(dialog.FileName) == ".png")
+                {
+                    BitmapEncoder pngEncoder = new PngBitmapEncoder();
+                    pngEncoder.Frames.Add(BitmapFrame.Create(rtb));
+                    using (var fs = System.IO.File.OpenWrite(dialog.FileName))
+                    {
+                        pngEncoder.Save(fs);
+                    }
+                }
+                else if (System.IO.Path.GetExtension(dialog.FileName) == ".jpg")
+                {
+                    BitmapEncoder jpgEncoder = new JpegBitmapEncoder();
+                    jpgEncoder.Frames.Add(BitmapFrame.Create(rtb));
+                    using (var fs = System.IO.File.OpenWrite(dialog.FileName))
+                    {
+                        jpgEncoder.Save(fs);
+                    }
+                }
+            }
+        }
+
+        private void Open_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog dialog = new OpenFileDialog();
+            dialog.Title = "Open";
+            dialog.Filter = "Binary File (*.bin)|*.bin";
+            dialog.Multiselect = false;
+            if (dialog.ShowDialog() == true)
+            {
+                string[] lines = File.ReadAllLines(dialog.FileName);
+                if (lines[0] != "PaintSaveFile")
+                    return;
+                _shapes.Clear();
+                canvas.Children.Clear();
+                IShape shape;
+                for (int i = 1; i < lines.Length; i++)
+                {
+                    string[] split = lines[i].Split(" ");
+                    shape = _prototypes[split[0]].Clone();
+                    shape.HandleStart(Double.Parse(split[1]), Double.Parse(split[2]));
+                    shape.HandleEnd(Double.Parse(split[3]), Double.Parse(split[4]));
+                    _shapes.Add(shape);
+                    canvas.Children.Add(shape.Draw());
+                }
+            }
+        }
+
+        private void Save_Click(object sender, RoutedEventArgs e)
+        {
+            SaveFileDialog dialog = new SaveFileDialog();
+            dialog.Title = "Save";
+            dialog.Filter = "Binary File (*.bin)|*.bin";
+            if (dialog.ShowDialog() == true)
+            {
+                string textout = "PaintSaveFile" + Environment.NewLine;
+                foreach (var item in _shapes)
+                {
+                    //Name startX startY endX endY
+                    textout += $"{item.Name} {item.GetStart().X} {item.GetStart().Y} " +
+                        $"{item.GetEnd().X} {item.GetEnd().Y}" + Environment.NewLine;
+                }
+                File.WriteAllText(dialog.FileName, textout);
+            }
         }
     }
 }
