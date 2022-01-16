@@ -25,40 +25,14 @@
             <Fluent:Ribbon.Menu>
                 <Fluent:Backstage Header="File">
                     <Fluent:BackstageTabControl>
-                        <Fluent:BackstageTabItem Header="New"></Fluent:BackstageTabItem>
-                        <Fluent:BackstageTabItem Header="Open"></Fluent:BackstageTabItem>
-                        <Fluent:BackstageTabItem Header="Save"></Fluent:BackstageTabItem>
-                        <Fluent:BackstageTabItem Header="Exit"></Fluent:BackstageTabItem>
+                        <Fluent:Button Header="New" Click="New_Click"></Fluent:Button>
+                        <Fluent:Button Header="Open" Click="Open_Click"></Fluent:Button>
+                        <Fluent:Button Header="Save" Click="Save_Click"></Fluent:Button>
+                        <Fluent:Button Header="Save as" Click="Export_Click"></Fluent:Button>
                     </Fluent:BackstageTabControl>
                 </Fluent:Backstage>
             </Fluent:Ribbon.Menu>
             <Fluent:RibbonTabItem Header="Home">
-                <Fluent:RibbonGroupBox Header="Adjust">
-                    <Fluent:Button Header="Open" Click="Open_Click">
-                        <Fluent:Button.LargeIcon >
-                            <materialDesign:PackIcon Kind="FolderOpen" 
-                                                     Width="25" Height="25"
-                                                     VerticalAlignment="Center"
-                                                     HorizontalAlignment="Center"/>
-                        </Fluent:Button.LargeIcon>
-                    </Fluent:Button>
-                    <Fluent:Button Header="Save" Click="Save_Click">
-                        <Fluent:Button.LargeIcon >
-                            <materialDesign:PackIcon Kind="ContentSave" 
-                                                     Width="25" Height="25"
-                                                     VerticalAlignment="Center"
-                                                     HorizontalAlignment="Center"/>
-                        </Fluent:Button.LargeIcon>
-                    </Fluent:Button>
-                    <Fluent:Button Header="Export" Click="Export_Click">
-                        <Fluent:Button.LargeIcon>
-                            <materialDesign:PackIcon Kind="FileExport" 
-                                                     Width="25" Height="25"
-                                                     VerticalAlignment="Center"
-                                                     HorizontalAlignment="Center"/>
-                        </Fluent:Button.LargeIcon>
-                    </Fluent:Button>
-                </Fluent:RibbonGroupBox>
                 <Fluent:RibbonGroupBox Header="Shapes" Name="ShapeGroupBox" MinWidth="60" Padding="10">
                     <Fluent:Button 
                         Tag="Line" 
