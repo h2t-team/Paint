@@ -243,5 +243,12 @@ namespace Paint
                 File.WriteAllText(dialog.FileName, textout);
             }
         }
+
+        private void New_Click(object sender, RoutedEventArgs e)
+        {
+            canvas.Children.Clear();
+            _shapes.Clear();
+            _preview = _prototypes["Line"].Clone();
+        }
     }
 }
