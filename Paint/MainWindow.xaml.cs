@@ -34,6 +34,7 @@ namespace Paint
         IShape _preview;
         string _selectedShapeName = "";
         Dictionary<string, IShape> _prototypes = new Dictionary<string, IShape>();
+        List<UIElement> _elements = new();
 
         public MainWindow()
         {
@@ -61,9 +62,8 @@ namespace Paint
                 //Clear all drawings
                 canvas.Children.Clear();
                 //Redraw all shapes that was saved before
-                foreach (var shape in _shapes)
+                foreach(var element in _elements)
                 {
-                    UIElement element = shape.Draw();
                     canvas.Children.Add(element);
                 }
                 //Draw preview
@@ -81,6 +81,7 @@ namespace Paint
                 _preview.HandleEnd(postion.X, postion.Y);
                 //add preview to shapes
                 _shapes.Add(_preview);
+                _elements.Add(_preview.Draw());
             }
         }
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -249,6 +250,24 @@ namespace Paint
             canvas.Children.Clear();
             _shapes.Clear();
             _preview = _prototypes["Line"].Clone();
+        }
+
+        private void Paint_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.V && Keyboard.IsKeyDown(Key.LeftCtrl))
+            {
+                if (Clipboard.ContainsImage())
+                {
+                    Image BodyImage = new Image
+                    {
+                        Source = Clipboard.GetImage(),
+                        Width = canvas.Width,
+                        Height = canvas.Height,
+                    };
+                    _elements.Add(BodyImage);
+                    canvas.Children.Add(BodyImage);
+                }
+            }
         }
     }
 }
