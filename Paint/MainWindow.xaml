@@ -46,15 +46,19 @@
             </Fluent:RibbonTabItem>
         </Fluent:Ribbon>
         <Grid>
-            <Canvas x:Name="canvas" Background="White">
-            </Canvas>
-            <Border 
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                <Grid>
+                    <Canvas x:Name="canvas" Background="White" Height="460" Width="900">
+                    </Canvas>
+                    <Border 
                 Background="Transparent" 
                 Name="CanvasArea"
                 MouseDown="canvas_MouseDown"
                 MouseMove="canvas_MouseMove"
                 MouseUp="canvas_MouseUp">
-            </Border>
+                    </Border>
+                </Grid>
+            </ScrollViewer>
         </Grid>
     </DockPanel>
 </Fluent:RibbonWindow>
