@@ -13,13 +13,13 @@
         TextElement.FontSize="13"
         TextOptions.TextFormattingMode="Ideal"
         TextOptions.TextRenderingMode="Auto"
-        Name="Main"
+        Name="Paint"
         Background="{DynamicResource MaterialDesignPaper}"
         FontFamily="{DynamicResource MaterialDesignFont}"
         WindowStartupLocation="Manual"
         MinHeight="600"
         MinWidth="900"
-        Loaded="Window_Loaded">
+        Loaded="Window_Loaded" KeyDown="Paint_KeyDown">
     <DockPanel LastChildFill="True">
         <Fluent:Ribbon DockPanel.Dock="Top">
             <Fluent:Ribbon.Menu>
