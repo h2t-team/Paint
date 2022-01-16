@@ -34,7 +34,7 @@ namespace Paint
         IShape _preview;
         string _selectedShapeName = "";
         Dictionary<string, IShape> _prototypes = new Dictionary<string, IShape>();
-        List<UIElement> _elements = new();
+        List<UIElement> _elements = new(); //Contain shape and image element.
 
         public MainWindow()
         {
@@ -200,29 +200,67 @@ namespace Paint
                 }
             }
         }
+        private BitmapImage ConvertToBitmap(System.Drawing.Image img, string ext)
+        {
+            MemoryStream ms = new MemoryStream();
+            if(ext == ".png")
+                img.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+            if(ext ==".jpg")
+                img.Save(ms, System.Drawing.Imaging.ImageFormat.Jpeg);               
 
+            BitmapImage ix = new BitmapImage();
+            ix.BeginInit();
+            ix.StreamSource = new MemoryStream(ms.ToArray());
+            ix.EndInit();
+            return ix;
+        }
         private void Open_Click(object sender, RoutedEventArgs e)
         {
             OpenFileDialog dialog = new OpenFileDialog();
             dialog.Title = "Open";
-            dialog.Filter = "Binary File (*.bin)|*.bin";
+            dialog.Filter = "Supported File(*.bin; *.png; *.jpg)|*.bin;*.png;*.jpg|Binary File (*.bin)|*.bin|Image File (*.png; *.jpg)|*.png;*.jpg";
             dialog.Multiselect = false;
             if (dialog.ShowDialog() == true)
             {
-                string[] lines = File.ReadAllLines(dialog.FileName);
-                if (lines[0] != "PaintSaveFile")
-                    return;
-                _shapes.Clear();
-                canvas.Children.Clear();
-                IShape shape;
-                for (int i = 1; i < lines.Length; i++)
+                if (System.IO.Path.GetExtension(dialog.FileName) == ".bin")
                 {
-                    string[] split = lines[i].Split(" ");
-                    shape = _prototypes[split[0]].Clone();
-                    shape.HandleStart(Double.Parse(split[1]), Double.Parse(split[2]));
-                    shape.HandleEnd(Double.Parse(split[3]), Double.Parse(split[4]));
-                    _shapes.Add(shape);
-                    canvas.Children.Add(shape.Draw());
+                    string[] lines = File.ReadAllLines(dialog.FileName);
+                    if (lines[0] != "PaintSaveFile")
+                        return;
+                    _shapes.Clear();
+                    _elements.Clear();
+                    canvas.Children.Clear();
+                    IShape shape;
+                    for (int i = 1; i < lines.Length; i++)
+                    {
+                        string[] split = lines[i].Split(" ");
+                        shape = _prototypes[split[0]].Clone();
+                        shape.HandleStart(Double.Parse(split[1]), Double.Parse(split[2]));
+                        shape.HandleEnd(Double.Parse(split[3]), Double.Parse(split[4]));
+                        _shapes.Add(shape);
+                        _elements.Add(shape.Draw());
+                        canvas.Children.Add(shape.Draw());
+                    }
+                }
+                else
+                {
+                    _shapes.Clear();
+                    _elements.Clear();
+                    canvas.Children.Clear();
+                    System.Drawing.Image image = System.Drawing.Image.FromFile(dialog.FileName);
+                    BitmapImage bitmap = ConvertToBitmap(image, System.IO.Path.GetExtension(dialog.FileName));
+                    Image wpfImage = new Image
+                    {
+                        Source = bitmap,
+                        Height = bitmap.Height,
+                        Width = bitmap.Width,
+                    };
+                    if (canvas.Width < wpfImage.Width)
+                        canvas.Width = wpfImage.Width;
+                    if (canvas.Height < wpfImage.Height)
+                        canvas.Height = wpfImage.Height;
+                    _elements.Add(wpfImage);
+                    canvas.Children.Add(wpfImage);
                 }
             }
         }
@@ -258,14 +296,20 @@ namespace Paint
             {
                 if (Clipboard.ContainsImage())
                 {
-                    Image BodyImage = new Image
+                    var clipboardImage = Clipboard.GetImage();
+                    Image image = new Image
                     {
-                        Source = Clipboard.GetImage(),
-                        Width = canvas.Width,
-                        Height = canvas.Height,
+                        Source = clipboardImage,
+                        Height = clipboardImage.Height,
+                        Width = clipboardImage.Width,
                     };
-                    _elements.Add(BodyImage);
-                    canvas.Children.Add(BodyImage);
+
+                    if (canvas.Width < image.Width)
+                        canvas.Width = image.Width;
+                    if (canvas.Height < image.Height)
+                        canvas.Height = image.Height;
+                    _elements.Add(image);
+                    canvas.Children.Add(image);
                 }
             }
         }
