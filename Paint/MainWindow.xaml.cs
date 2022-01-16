@@ -218,7 +218,7 @@ namespace Paint
         {
             OpenFileDialog dialog = new OpenFileDialog();
             dialog.Title = "Open";
-            dialog.Filter = "Binary File (*.bin)|*.bin|Image File (*.png; *.jpg)|*.png;*.jpg";
+            dialog.Filter = "Supported File(*.bin; *.png; *.jpg)|*.bin;*.png;*.jpg|Binary File (*.bin)|*.bin|Image File (*.png; *.jpg)|*.png;*.jpg";
             dialog.Multiselect = false;
             if (dialog.ShowDialog() == true)
             {
