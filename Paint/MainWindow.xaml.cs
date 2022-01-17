@@ -34,6 +34,9 @@ namespace Paint
         IShape _preview;
         string _selectedShapeName = "";
         Dictionary<string, IShape> _prototypes = new Dictionary<string, IShape>();
+        List<UIElement> _elements = new(); //Contain shape and image element.
+        List<UIElement> _undoElements = new();
+        List<UIElement> _redoElements = new();
 
         public MainWindow()
         {
@@ -61,9 +64,8 @@ namespace Paint
                 //Clear all drawings
                 canvas.Children.Clear();
                 //Redraw all shapes that was saved before
-                foreach (var shape in _shapes)
+                foreach(var element in _elements)
                 {
-                    UIElement element = shape.Draw();
                     canvas.Children.Add(element);
                 }
                 //Draw preview
@@ -81,6 +83,9 @@ namespace Paint
                 _preview.HandleEnd(postion.X, postion.Y);
                 //add preview to shapes
                 _shapes.Add(_preview);
+                if(_elements.Count() != 0)
+                    _undoElements.Add(_elements.Last());
+                _elements.Add(_preview.Draw());
             }
         }
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -199,29 +204,67 @@ namespace Paint
                 }
             }
         }
+        private BitmapImage ConvertToBitmap(System.Drawing.Image img, string ext)
+        {
+            MemoryStream ms = new MemoryStream();
+            if(ext == ".png")
+                img.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+            if(ext ==".jpg")
+                img.Save(ms, System.Drawing.Imaging.ImageFormat.Jpeg);               
 
+            BitmapImage ix = new BitmapImage();
+            ix.BeginInit();
+            ix.StreamSource = new MemoryStream(ms.ToArray());
+            ix.EndInit();
+            return ix;
+        }
         private void Open_Click(object sender, RoutedEventArgs e)
         {
             OpenFileDialog dialog = new OpenFileDialog();
             dialog.Title = "Open";
-            dialog.Filter = "Binary File (*.bin)|*.bin";
+            dialog.Filter = "Supported File(*.bin; *.png; *.jpg)|*.bin;*.png;*.jpg|Binary File (*.bin)|*.bin|Image File (*.png; *.jpg)|*.png;*.jpg";
             dialog.Multiselect = false;
             if (dialog.ShowDialog() == true)
             {
-                string[] lines = File.ReadAllLines(dialog.FileName);
-                if (lines[0] != "PaintSaveFile")
-                    return;
-                _shapes.Clear();
-                canvas.Children.Clear();
-                IShape shape;
-                for (int i = 1; i < lines.Length; i++)
+                if (System.IO.Path.GetExtension(dialog.FileName) == ".bin")
                 {
-                    string[] split = lines[i].Split(" ");
-                    shape = _prototypes[split[0]].Clone();
-                    shape.HandleStart(Double.Parse(split[1]), Double.Parse(split[2]));
-                    shape.HandleEnd(Double.Parse(split[3]), Double.Parse(split[4]));
-                    _shapes.Add(shape);
-                    canvas.Children.Add(shape.Draw());
+                    string[] lines = File.ReadAllLines(dialog.FileName);
+                    if (lines[0] != "PaintSaveFile")
+                        return;
+                    _shapes.Clear();
+                    _elements.Clear();
+                    canvas.Children.Clear();
+                    IShape shape;
+                    for (int i = 1; i < lines.Length; i++)
+                    {
+                        string[] split = lines[i].Split(" ");
+                        shape = _prototypes[split[0]].Clone();
+                        shape.HandleStart(Double.Parse(split[1]), Double.Parse(split[2]));
+                        shape.HandleEnd(Double.Parse(split[3]), Double.Parse(split[4]));
+                        _shapes.Add(shape);
+                        _elements.Add(shape.Draw());
+                        canvas.Children.Add(shape.Draw());
+                    }
+                }
+                else
+                {
+                    _shapes.Clear();
+                    _elements.Clear();
+                    canvas.Children.Clear();
+                    System.Drawing.Image image = System.Drawing.Image.FromFile(dialog.FileName);
+                    BitmapImage bitmap = ConvertToBitmap(image, System.IO.Path.GetExtension(dialog.FileName));
+                    Image wpfImage = new Image
+                    {
+                        Source = bitmap,
+                        Height = bitmap.Height,
+                        Width = bitmap.Width,
+                    };
+                    if (canvas.Width < wpfImage.Width)
+                        canvas.Width = wpfImage.Width;
+                    if (canvas.Height < wpfImage.Height)
+                        canvas.Height = wpfImage.Height;
+                    _elements.Add(wpfImage);
+                    canvas.Children.Add(wpfImage);
                 }
             }
         }
@@ -242,6 +285,82 @@ namespace Paint
                 }
                 File.WriteAllText(dialog.FileName, textout);
             }
+        }
+
+        private void New_Click(object sender, RoutedEventArgs e)
+        {
+            canvas.Children.Clear();
+            _shapes.Clear();
+            _preview = _prototypes["Line"].Clone();
+        }
+
+        private void Paint_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.V && Keyboard.IsKeyDown(Key.LeftCtrl))
+            {
+                if (Clipboard.ContainsImage())
+                {
+                    var clipboardImage = Clipboard.GetImage();
+                    Image image = new Image
+                    {
+                        Source = clipboardImage,
+                        Height = clipboardImage.Height,
+                        Width = clipboardImage.Width,
+                    };
+
+                    if (canvas.Width < image.Width)
+                        canvas.Width = image.Width;
+                    if (canvas.Height < image.Height)
+                        canvas.Height = image.Height;
+                    _elements.Add(image);
+                    canvas.Children.Add(image);
+                }
+            }
+            if (e.Key == Key.Z && Keyboard.IsKeyDown(Key.LeftCtrl))
+            {
+                HandleUndo();
+            }
+            if (e.Key == Key.Y && Keyboard.IsKeyDown(Key.LeftCtrl))
+            {
+                HandleRedo();
+            }
+
+        }
+        private void DrawAll()
+        {            
+            canvas.Children.Clear();
+            foreach (var element in _elements)
+                canvas.Children.Add(element);
+        }
+        private void HandleUndo()
+        {
+            if (_elements.Count() != 0)
+            {
+                _redoElements.Add(_elements.Last());
+                _elements.RemoveAt(_elements.Count() - 1);
+            }
+            if (_undoElements.Count() != 0)
+                _undoElements.RemoveAt(_undoElements.Count() - 1);
+            DrawAll();
+        }
+        private void Undo_Click(object sender, RoutedEventArgs e)
+        {
+            HandleUndo();
+        }
+        private void HandleRedo()
+        {
+            if (_redoElements.Count() != 0)
+            {
+                if (_elements.Count() != 0)
+                    _undoElements.Add(_elements.Last());
+                _elements.Add(_redoElements.Last());
+                _redoElements.RemoveAt(_redoElements.Count() - 1);
+            }
+            DrawAll();
+        }
+        private void Redo_Click(object sender, RoutedEventArgs e)
+        {
+            HandleRedo();
         }
     }
 }

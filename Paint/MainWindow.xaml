@@ -13,50 +13,36 @@
         TextElement.FontSize="13"
         TextOptions.TextFormattingMode="Ideal"
         TextOptions.TextRenderingMode="Auto"
-        Name="Main"
+        Name="Paint"
         Background="{DynamicResource MaterialDesignPaper}"
         FontFamily="{DynamicResource MaterialDesignFont}"
         WindowStartupLocation="Manual"
         MinHeight="600"
         MinWidth="900"
-        Loaded="Window_Loaded">
+        Loaded="Window_Loaded" KeyDown="Paint_KeyDown">
     <DockPanel LastChildFill="True">
-        <Fluent:Ribbon DockPanel.Dock="Top">
+        <Fluent:Ribbon DockPanel.Dock="Top">            
             <Fluent:Ribbon.Menu>
                 <Fluent:Backstage Header="File">
                     <Fluent:BackstageTabControl>
-                        <Fluent:BackstageTabItem Header="New"></Fluent:BackstageTabItem>
-                        <Fluent:BackstageTabItem Header="Open"></Fluent:BackstageTabItem>
-                        <Fluent:BackstageTabItem Header="Save"></Fluent:BackstageTabItem>
-                        <Fluent:BackstageTabItem Header="Exit"></Fluent:BackstageTabItem>
+                        <Fluent:Button Header="New" Click="New_Click"></Fluent:Button>
+                        <Fluent:Button Header="Open" Click="Open_Click"></Fluent:Button>
+                        <Fluent:Button Header="Save" Click="Save_Click"></Fluent:Button>
+                        <Fluent:Button Header="Save as" Click="Export_Click"></Fluent:Button>
                     </Fluent:BackstageTabControl>
                 </Fluent:Backstage>
             </Fluent:Ribbon.Menu>
             <Fluent:RibbonTabItem Header="Home">
-                <Fluent:RibbonGroupBox Header="Adjust">
-                    <Fluent:Button Header="Open" Click="Open_Click">
-                        <Fluent:Button.LargeIcon >
-                            <materialDesign:PackIcon Kind="FolderOpen" 
-                                                     Width="25" Height="25"
-                                                     VerticalAlignment="Center"
-                                                     HorizontalAlignment="Center"/>
-                        </Fluent:Button.LargeIcon>
+                <Fluent:RibbonGroupBox>
+                    <Fluent:Button Header="Undo" Click="Undo_Click">
+                        <Fluent:Button.Icon>
+                            <materialDesign:PackIcon Kind="Undo" Height="30" Width="30"/>
+                        </Fluent:Button.Icon>
                     </Fluent:Button>
-                    <Fluent:Button Header="Save" Click="Save_Click">
-                        <Fluent:Button.LargeIcon >
-                            <materialDesign:PackIcon Kind="ContentSave" 
-                                                     Width="25" Height="25"
-                                                     VerticalAlignment="Center"
-                                                     HorizontalAlignment="Center"/>
-                        </Fluent:Button.LargeIcon>
-                    </Fluent:Button>
-                    <Fluent:Button Header="Export" Click="Export_Click">
-                        <Fluent:Button.LargeIcon>
-                            <materialDesign:PackIcon Kind="FileExport" 
-                                                     Width="25" Height="25"
-                                                     VerticalAlignment="Center"
-                                                     HorizontalAlignment="Center"/>
-                        </Fluent:Button.LargeIcon>
+                    <Fluent:Button Header="Redo" Click="Redo_Click">
+                        <Fluent:Button.Icon>
+                            <materialDesign:PackIcon Kind="Redo" Height="30" Width="30"/>
+                        </Fluent:Button.Icon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
                 <Fluent:RibbonGroupBox Header="Shapes" Name="ShapeGroupBox" MinWidth="60" Padding="10">
@@ -78,15 +64,19 @@
             </Fluent:RibbonTabItem>
         </Fluent:Ribbon>
         <Grid>
-            <Canvas x:Name="canvas" Background="White">
-            </Canvas>
-            <Border 
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                <Grid>
+                    <Canvas x:Name="canvas" Background="White" Height="460" Width="900">
+                    </Canvas>
+                    <Border 
                 Background="Transparent" 
                 Name="CanvasArea"
                 MouseDown="canvas_MouseDown"
                 MouseMove="canvas_MouseMove"
                 MouseUp="canvas_MouseUp">
-            </Border>
+                    </Border>
+                </Grid>
+            </ScrollViewer>
         </Grid>
     </DockPanel>
 </Fluent:RibbonWindow>
