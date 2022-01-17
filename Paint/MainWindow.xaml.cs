@@ -35,6 +35,8 @@ namespace Paint
         string _selectedShapeName = "";
         Dictionary<string, IShape> _prototypes = new Dictionary<string, IShape>();
         List<UIElement> _elements = new(); //Contain shape and image element.
+        List<UIElement> _undoElements = new();
+        List<UIElement> _redoElements = new();
 
         public MainWindow()
         {
@@ -81,6 +83,8 @@ namespace Paint
                 _preview.HandleEnd(postion.X, postion.Y);
                 //add preview to shapes
                 _shapes.Add(_preview);
+                if(_elements.Count() != 0)
+                    _undoElements.Add(_elements.Last());
                 _elements.Add(_preview.Draw());
             }
         }
@@ -312,6 +316,51 @@ namespace Paint
                     canvas.Children.Add(image);
                 }
             }
+            if (e.Key == Key.Z && Keyboard.IsKeyDown(Key.LeftCtrl))
+            {
+                HandleUndo();
+            }
+            if (e.Key == Key.Y && Keyboard.IsKeyDown(Key.LeftCtrl))
+            {
+                HandleRedo();
+            }
+
+        }
+        private void DrawAll()
+        {            
+            canvas.Children.Clear();
+            foreach (var element in _elements)
+                canvas.Children.Add(element);
+        }
+        private void HandleUndo()
+        {
+            if (_elements.Count() != 0)
+            {
+                _redoElements.Add(_elements.Last());
+                _elements.RemoveAt(_elements.Count() - 1);
+            }
+            if (_undoElements.Count() != 0)
+                _undoElements.RemoveAt(_undoElements.Count() - 1);
+            DrawAll();
+        }
+        private void Undo_Click(object sender, RoutedEventArgs e)
+        {
+            HandleUndo();
+        }
+        private void HandleRedo()
+        {
+            if (_redoElements.Count() != 0)
+            {
+                if (_elements.Count() != 0)
+                    _undoElements.Add(_elements.Last());
+                _elements.Add(_redoElements.Last());
+                _redoElements.RemoveAt(_redoElements.Count() - 1);
+            }
+            DrawAll();
+        }
+        private void Redo_Click(object sender, RoutedEventArgs e)
+        {
+            HandleRedo();
         }
     }
 }

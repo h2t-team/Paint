@@ -21,7 +21,7 @@
         MinWidth="900"
         Loaded="Window_Loaded" KeyDown="Paint_KeyDown">
     <DockPanel LastChildFill="True">
-        <Fluent:Ribbon DockPanel.Dock="Top">
+        <Fluent:Ribbon DockPanel.Dock="Top">            
             <Fluent:Ribbon.Menu>
                 <Fluent:Backstage Header="File">
                     <Fluent:BackstageTabControl>
@@ -33,6 +33,18 @@
                 </Fluent:Backstage>
             </Fluent:Ribbon.Menu>
             <Fluent:RibbonTabItem Header="Home">
+                <Fluent:RibbonGroupBox>
+                    <Fluent:Button Header="Undo" Click="Undo_Click">
+                        <Fluent:Button.Icon>
+                            <materialDesign:PackIcon Kind="Undo" Height="30" Width="30"/>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
+                    <Fluent:Button Header="Redo" Click="Redo_Click">
+                        <Fluent:Button.Icon>
+                            <materialDesign:PackIcon Kind="Redo" Height="30" Width="30"/>
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>
                 <Fluent:RibbonGroupBox Header="Shapes" Name="ShapeGroupBox" MinWidth="60" Padding="10">
                     <Fluent:Button 
                         Tag="Line" 
