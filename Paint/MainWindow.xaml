@@ -69,6 +69,12 @@
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
+                <Fluent:RibbonGroupBox Header="Color" Name="ColorGroupBox" Padding="10">
+                    
+                </Fluent:RibbonGroupBox>
+                <Fluent:RibbonGroupBox Header="Style" Name="StyleGroupBox" Padding="10">
+                    
+                </Fluent:RibbonGroupBox>
             </Fluent:RibbonTabItem>
         </Fluent:Ribbon>
         <Grid>

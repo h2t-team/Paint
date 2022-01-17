@@ -176,7 +176,7 @@ namespace Paint
             if (dialog.ShowDialog() == true)
             {
                 RenderTargetBitmap rtb = new RenderTargetBitmap((int)canvas.RenderSize.Width,
-               (int)canvas.RenderSize.Height, 96d, 96d, System.Windows.Media.PixelFormats.Default);
+                (int)canvas.RenderSize.Height, 96d, 96d, System.Windows.Media.PixelFormats.Default);
                 rtb.Render(canvas);
                 //check file extension
                 if (System.IO.Path.GetExtension(dialog.FileName) == ".png")
