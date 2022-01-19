@@ -55,11 +55,25 @@
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
-                <Fluent:RibbonGroupBox Header="Color" Name="ColorGroupBox" Padding="10">
+                <Fluent:RibbonGroupBox Header="Color" Name="ColorGroupBox">
+                    <materialDesign:ColorPicker>
+                        
+                    </materialDesign:ColorPicker>
                     
                 </Fluent:RibbonGroupBox>
-                <Fluent:RibbonGroupBox Header="Style" Name="StyleGroupBox" Padding="10">
-                    
+                <Fluent:RibbonGroupBox Header="Style" Name="StyleGroupBox">
+                    <Fluent:ComboBox Header="Width">
+                        <ComboBoxItem>
+                            abc
+                        </ComboBoxItem>
+                    </Fluent:ComboBox>
+                </Fluent:RibbonGroupBox>
+                <Fluent:RibbonGroupBox Header="Tools">
+                    <Fluent:Button SizeDefinition="Small" ToolTip="Fill">
+                        <Fluent:Button.Icon>
+                            <materialDesign:PackIcon Kind="FormatColorFill" />
+                        </Fluent:Button.Icon>
+                    </Fluent:Button>
                 </Fluent:RibbonGroupBox>
             </Fluent:RibbonTabItem>
         </Fluent:Ribbon>
