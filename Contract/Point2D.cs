@@ -15,24 +15,13 @@ namespace Contract
         public double Y { get; set; }
         public string Name => "Point";
 
+        public Color OutlineColor { get; set; }
+        public int PenWidth { get; set; }
+        public DoubleCollection StrokeType { get; set; }
+
         public IShape Clone()
         {
             return new Point2D();
-        }
-
-        public UIElement Draw()
-        {
-            Line l = new Line()
-            {
-                X1 = X,
-                Y1 = Y,
-                X2 = X,
-                Y2 = Y,
-                StrokeThickness = 1,
-                Stroke = new SolidColorBrush(Colors.Black)
-            };
-
-            return l;
         }
 
         public void HandleEnd(double x, double y)
@@ -54,6 +43,22 @@ namespace Contract
         public Point2D GetEnd()
         {
             return this;
+        }
+
+        public UIElement Draw()
+        {
+            Line l = new Line()
+            {
+                X1 = X,
+                Y1 = Y,
+                X2 = X,
+                Y2 = Y,
+                StrokeThickness = PenWidth,
+                Stroke = new SolidColorBrush(OutlineColor),
+                StrokeDashArray = StrokeType
+            };
+
+            return l;
         }
     }
 }

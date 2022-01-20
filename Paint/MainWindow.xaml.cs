@@ -6,20 +6,14 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using Button = Fluent.Button;
 using MaterialDesignThemes.Wpf;
+using System.ComponentModel;
 using System.Diagnostics;
 
 namespace Paint
@@ -33,10 +27,21 @@ namespace Paint
         List<IShape> _shapes = new List<IShape>();
         IShape _preview;
         string _selectedShapeName = "";
+        int _selectedPenWidth = 1;
+        string _selectedStrokeType = "";
         Dictionary<string, IShape> _prototypes = new Dictionary<string, IShape>();
+        Dictionary<string, DoubleCollection> _strokeTypes = new Dictionary<string, DoubleCollection>();
         List<UIElement> _elements = new(); //Contain shape and image element.
         List<UIElement> _undoElements = new();
         List<UIElement> _redoElements = new();
+
+        BindingList<int> WidthList = new()
+        {
+            1,
+            3,
+            5
+        };
+        string StrokeType;
 
         public MainWindow()
         {
@@ -51,6 +56,9 @@ namespace Paint
             //get start positon and save in HandleStart of preview
             Point position = e.GetPosition(canvas);
             _preview.HandleStart(position.X, position.Y);
+            _preview.OutlineColor = (Color)ColorGalleryStandard.SelectedColor;
+            _preview.PenWidth = _selectedPenWidth;
+            _preview.StrokeType = _strokeTypes[_selectedStrokeType];
         }
 
         private void canvas_MouseMove(object sender, MouseEventArgs e)
@@ -165,6 +173,23 @@ namespace Paint
             // default selection
             _selectedShapeName = lineShape.Name;
             _preview = _prototypes[_selectedShapeName].Clone();
+
+            //add the stroke types
+            _strokeTypes.Add("Solid", new DoubleCollection(new List<double>() { 1, 0 }));
+            _strokeTypes.Add("Dash", new DoubleCollection(new List<double>() { 4, 4 }));
+            _strokeTypes.Add("Dot", new DoubleCollection(new List<double>() { 1, 2 }));
+            _strokeTypes.Add("Dash Dot", new DoubleCollection(new List<double>() { 4, 4, 1, 4 }));
+
+            foreach (var item in _strokeTypes)
+            {
+                var Btn = new Button();
+                Btn.Header = item.Key;
+                Btn.Tag = item.Key;
+                Btn.Click += SetStrokeType;
+                StrokeCombobox.Items.Add(Btn);
+            }
+            
+            _selectedStrokeType = _strokeTypes.First().Key;
         }
         private void prototypeButton_Click(object sender, RoutedEventArgs e)
         {
@@ -241,6 +266,7 @@ namespace Paint
                         shape = _prototypes[split[0]].Clone();
                         shape.HandleStart(Double.Parse(split[1]), Double.Parse(split[2]));
                         shape.HandleEnd(Double.Parse(split[3]), Double.Parse(split[4]));
+                        shape.OutlineColor = (Color)ColorGalleryStandard.SelectedColor;
                         _shapes.Add(shape);
                         _elements.Add(shape.Draw());
                         canvas.Children.Add(shape.Draw());
@@ -361,6 +387,19 @@ namespace Paint
         private void Redo_Click(object sender, RoutedEventArgs e)
         {
             HandleRedo();
+        }
+
+        private void SetPenWidth(object sender, RoutedEventArgs e)
+        {
+            var Btn = sender as Button;
+            _selectedPenWidth = int.Parse((string)Btn.Tag);
+        }
+
+        private void SetStrokeType(object sender, RoutedEventArgs e)
+        {
+            var Btn = sender as Button;
+            _selectedStrokeType = (string)Btn.Tag;
+            Debug.WriteLine(_selectedStrokeType);
         }
     }
 }

@@ -55,26 +55,79 @@
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
-                <Fluent:RibbonGroupBox Header="Color" Name="ColorGroupBox">
-                    <materialDesign:ColorPicker>
-                        
-                    </materialDesign:ColorPicker>
-                    
+                <Fluent:RibbonGroupBox Header="Styles" Name="StyleGroupBox">
+                    <Fluent:DropDownButton Header="Colors">
+                        <Fluent:DropDownButton.Icon>
+                            <Border Height="30"
+                                VerticalAlignment="Center"
+                                BorderThickness="2"
+                                BorderBrush="DarkGray"
+                                CornerRadius="5">
+                                <Border.Background>
+                                    <SolidColorBrush
+                                        Color="{Binding ElementName=ColorGalleryStandard, Path=SelectedColor, FallbackValue=Black}" />
+                                </Border.Background>
+                            </Border>
+                        </Fluent:DropDownButton.Icon>
+                        <Fluent:ColorGallery 
+                            x:Name="ColorGalleryStandard"
+                            Mode="StandardColors" 
+                            IsAutomaticColorButtonVisible="False"
+                            SelectedColor="Black">
+                        </Fluent:ColorGallery>
+                    </Fluent:DropDownButton>
+                    <Fluent:DropDownButton Header="Width" Name="WidthCombobox">
+                        <Fluent:DropDownButton.Icon>
+                            <materialDesign:PackIcon 
+                                Kind="DrawPen" 
+                                HorizontalAlignment="Center" 
+                                VerticalAlignment="Center" 
+                                Width="30" Height="30"/>
+                        </Fluent:DropDownButton.Icon>
+                        <Fluent:Button Header="1pt" Tag="1" Click="SetPenWidth"></Fluent:Button>
+                        <Fluent:Button Header="3pt" Tag="3" Click="SetPenWidth"></Fluent:Button>
+                        <Fluent:Button Header="5pt" Tag="5" Click="SetPenWidth"></Fluent:Button>
+                        <!--<Fluent:DropDownButton.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Margin="0" Orientation="Horizontal" VerticalAlignment="Center" x:Name="PenWidthItem">
+                                    <TextBlock Text="{Binding}" FontSize="15"></TextBlock>
+                                    <TextBlock Text="pt" FontSize="15"></TextBlock>
+                                    <Border Height="{Binding}" Width="60" Background="Black" Margin="10 0 20 0"></Border>
+                                </StackPanel>
+                                <DataTemplate.Triggers>
+                                    <Trigger SourceName="PenWidthItem" Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="PenWidthItem" Property="Background" Value="Red"/>
+                                    </Trigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>-->
+                        <!--</Fluent:DropDownButton.ItemTemplate>-->
+                    </Fluent:DropDownButton>
+                    <Fluent:DropDownButton Header="Stroke" Name="StrokeCombobox">
+                        <Fluent:DropDownButton.Icon>
+                            <materialDesign:PackIcon 
+                                Kind="VectorBezier" 
+                                HorizontalAlignment="Center" 
+                                VerticalAlignment="Center" 
+                                Width="30" Height="30"/>
+                        </Fluent:DropDownButton.Icon>
+                        <!--<Fluent:DropDownButton.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding}"></TextBlock>
+                                    <TextBlock Text="pt"></TextBlock>
+                                </StackPanel>
+                            </DataTemplate>
+                        </Fluent:DropDownButton.ItemTemplate>-->
+                    </Fluent:DropDownButton>
+
                 </Fluent:RibbonGroupBox>
-                <Fluent:RibbonGroupBox Header="Style" Name="StyleGroupBox">
-                    <Fluent:ComboBox Header="Width">
-                        <ComboBoxItem>
-                            abc
-                        </ComboBoxItem>
-                    </Fluent:ComboBox>
-                </Fluent:RibbonGroupBox>
-                <Fluent:RibbonGroupBox Header="Tools">
+                <!--<Fluent:RibbonGroupBox Header="Tools">
                     <Fluent:Button SizeDefinition="Small" ToolTip="Fill">
-                        <Fluent:Button.Icon>
+                        <Fluent:Button.LargeIcon>
                             <materialDesign:PackIcon Kind="FormatColorFill" />
-                        </Fluent:Button.Icon>
+                        </Fluent:Button.LargeIcon>
                     </Fluent:Button>
-                </Fluent:RibbonGroupBox>
+                </Fluent:RibbonGroupBox>-->
             </Fluent:RibbonTabItem>
         </Fluent:Ribbon>
         <Grid>
