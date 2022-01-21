@@ -64,42 +64,36 @@ namespace Paint
         private void canvas_MouseMove(object sender, MouseEventArgs e)
         {
             //If drawing
-            if (_selection == "shape")
+            if (_isDrawing)
             {
-                if (_isDrawing)
+                Point position = e.GetPosition(canvas);
+                //get current position
+                _preview.HandleEnd(position.X, position.Y);
+                //Clear all drawings
+                canvas.Children.Clear();
+                //Redraw all shapes that was saved before
+                foreach (var element in _elements)
                 {
-                    Point position = e.GetPosition(canvas);
-                    //get current position
-                    _preview.HandleEnd(position.X, position.Y);
-                    //Clear all drawings
-                    canvas.Children.Clear();
-                    //Redraw all shapes that was saved before
-                    foreach (var element in _elements)
-                    {
-                        canvas.Children.Add(element);
-                    }
-                    //Draw preview
-                    canvas.Children.Add(_preview.Draw());
+                    canvas.Children.Add(element);
                 }
+                //Draw preview
+                canvas.Children.Add(_preview.Draw());
             }
         }
 
         private void canvas_MouseUp(object sender, MouseButtonEventArgs e)
         {
-            if (_selection == "shape")
+            if (_isDrawing == true)
             {
-                if (_isDrawing == true)
-                {
-                    _isDrawing = false;
-                    //get end position and save in HandleEnd of preview
-                    Point postion = e.GetPosition(canvas);
-                    _preview.HandleEnd(postion.X, postion.Y);
-                    //add preview to shapes
-                    _shapes.Add(_preview);
-                    if (_elements.Count() != 0)
-                        _undoElements.Add(_elements.Last());
-                    _elements.Add(_preview.Draw());
-                }
+                _isDrawing = false;
+                //get end position and save in HandleEnd of preview
+                Point postion = e.GetPosition(canvas);
+                _preview.HandleEnd(postion.X, postion.Y);
+                //add preview to shapes
+                _shapes.Add(_preview);
+                if (_elements.Count() != 0)
+                    _undoElements.Add(_elements.Last());
+                _elements.Add(_preview.Draw());
             }
         }
         private void Window_Loaded(object sender, RoutedEventArgs e)
