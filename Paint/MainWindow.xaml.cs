@@ -118,22 +118,25 @@ namespace Paint
         {
             InitializeComponent();
         }
-
+        private void EndEdit()
+        {
+            if (_isEditing && MouseHitType == HitType.None)
+            {
+                _isEditing = false;
+                _isDragging = false;
+                _shapes.Add(_preview);
+                if (_elements.Count > 0)
+                    _undoElements.Add(_elements.Last());
+                _elements.Add(_preview.Draw());
+                DrawAll();
+                return;
+            }
+        }
         private void canvas_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (_selection == "shape")
             {
-                if (_isEditing && MouseHitType == HitType.None)
-                {
-                    _isEditing = false;
-                    _isDragging = false;
-                    _shapes.Add(_preview);
-                    if (_elements.Count > 0)
-                        _undoElements.Add(_elements.Last());
-                    _elements.Add(_preview.Draw());
-                    DrawAll();
-                    return;
-                }
+                EndEdit();
                 if (_isEditing)
                 {
                     if (!_isDragging)
@@ -339,7 +342,6 @@ namespace Paint
             // default selection
             _selectedShapeName = lineShape.Name;
             _preview = _prototypes[_selectedShapeName].Clone();
-            //CanvasArea.Cursor = Cursors.Cross;
             _selection = "shape";
 
             //add the stroke types
@@ -361,15 +363,16 @@ namespace Paint
         }
         private void prototypeButton_Click(object sender, RoutedEventArgs e)
         {
+            EndEdit();
             var Btn = sender as System.Windows.Controls.Button;
             _selectedShapeName = Btn.Tag as string;
             _preview = _prototypes[_selectedShapeName];
-            //CanvasArea.Cursor = Cursors.Cross;
             _selection = "shape";
         }
 
         private void Export_Click(object sender, RoutedEventArgs e)
         {
+            EndEdit();
             SaveFileDialog dialog = new SaveFileDialog();
             dialog.Title = "Export";
             dialog.Filter = "PNG (*.png)|*.png|JPG (*.jpg)|*.jpg";
@@ -467,6 +470,7 @@ namespace Paint
 
         private void Save_Click(object sender, RoutedEventArgs e)
         {
+            EndEdit();
             SaveFileDialog dialog = new SaveFileDialog();
             dialog.Title = "Save";
             dialog.Filter = "Binary File (*.bin)|*.bin";
@@ -574,8 +578,8 @@ namespace Paint
 
         private void SetFill(object sender, RoutedEventArgs e)
         {
+            EndEdit();
             _selection = "fill";
-            CanvasArea.Cursor = new Cursor("format-color-fill.cur");
         }
 
         private void canvas_MouseLeave(object sender, MouseEventArgs e)
@@ -586,6 +590,8 @@ namespace Paint
         {
             if(_selection == "shape")
                 Cursor = Cursors.Cross;
+            else if(_selection == "fill")
+                CanvasArea.Cursor = new Cursor("format-color-fill.cur");
         }
     }
 }
