@@ -57,7 +57,7 @@ namespace Paint
             }
             else if (_selection == "fill")
             {
-                
+                Debug.WriteLine("fill");
             }
         }
 
