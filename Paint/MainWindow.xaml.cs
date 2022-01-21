@@ -29,19 +29,12 @@ namespace Paint
         string _selectedShapeName = "";
         int _selectedPenWidth = 1;
         string _selectedStrokeType = "";
+        string _selection = "shape";
         Dictionary<string, IShape> _prototypes = new Dictionary<string, IShape>();
         Dictionary<string, DoubleCollection> _strokeTypes = new Dictionary<string, DoubleCollection>();
         List<UIElement> _elements = new(); //Contain shape and image element.
         List<UIElement> _undoElements = new();
         List<UIElement> _redoElements = new();
-
-        BindingList<int> WidthList = new()
-        {
-            1,
-            3,
-            5
-        };
-        string StrokeType;
 
         public MainWindow()
         {
@@ -50,15 +43,22 @@ namespace Paint
 
         private void canvas_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            //clone shape of preview with selected shape
-            _preview = _prototypes[_selectedShapeName].Clone();
-            _isDrawing = true;
-            //get start positon and save in HandleStart of preview
-            Point position = e.GetPosition(canvas);
-            _preview.HandleStart(position.X, position.Y);
-            _preview.OutlineColor = (Color)ColorGalleryStandard.SelectedColor;
-            _preview.PenWidth = _selectedPenWidth;
-            _preview.StrokeType = _strokeTypes[_selectedStrokeType];
+            if (_selection == "shape")
+            {
+                //clone shape of preview with selected shape
+                _preview = _prototypes[_selectedShapeName].Clone();
+                _isDrawing = true;
+                //get start positon and save in HandleStart of preview
+                Point position = e.GetPosition(canvas);
+                _preview.HandleStart(position.X, position.Y);
+                _preview.OutlineColor = (Color)ColorGalleryStandard.SelectedColor;
+                _preview.PenWidth = _selectedPenWidth;
+                _preview.StrokeType = _strokeTypes[_selectedStrokeType];
+            }
+            else if (_selection == "fill")
+            {
+                
+            }
         }
 
         private void canvas_MouseMove(object sender, MouseEventArgs e)
@@ -72,7 +72,7 @@ namespace Paint
                 //Clear all drawings
                 canvas.Children.Clear();
                 //Redraw all shapes that was saved before
-                foreach(var element in _elements)
+                foreach (var element in _elements)
                 {
                     canvas.Children.Add(element);
                 }
@@ -91,7 +91,7 @@ namespace Paint
                 _preview.HandleEnd(postion.X, postion.Y);
                 //add preview to shapes
                 _shapes.Add(_preview);
-                if(_elements.Count() != 0)
+                if (_elements.Count() != 0)
                     _undoElements.Add(_elements.Last());
                 _elements.Add(_preview.Draw());
             }
@@ -128,7 +128,8 @@ namespace Paint
 
                 Button button = new()
                 {
-                    Tag = shape.Name
+                    Tag = shape.Name,
+                    ToolTip = shape.Name
                 };
                 button.SizeDefinition = "Small";
                 PackIcon icon = new();
@@ -173,6 +174,8 @@ namespace Paint
             // default selection
             _selectedShapeName = lineShape.Name;
             _preview = _prototypes[_selectedShapeName].Clone();
+            CanvasArea.Cursor = Cursors.Cross;
+            _selection = "shape";
 
             //add the stroke types
             _strokeTypes.Add("Solid", new DoubleCollection(new List<double>() { 1, 0 }));
@@ -196,6 +199,8 @@ namespace Paint
             var Btn = sender as System.Windows.Controls.Button;
             _selectedShapeName = Btn.Tag as string;
             _preview = _prototypes[_selectedShapeName];
+            CanvasArea.Cursor = Cursors.Cross;
+            _selection = "shape";
         }
 
         private void Export_Click(object sender, RoutedEventArgs e)
@@ -391,7 +396,8 @@ namespace Paint
 
         private void SetPenWidth(object sender, RoutedEventArgs e)
         {
-            var Btn = sender as Button;
+            WidthCombobox.IsDropDownOpen = false;
+            var Btn = sender as System.Windows.Controls.Button;
             _selectedPenWidth = int.Parse((string)Btn.Tag);
         }
 
@@ -399,7 +405,12 @@ namespace Paint
         {
             var Btn = sender as Button;
             _selectedStrokeType = (string)Btn.Tag;
-            Debug.WriteLine(_selectedStrokeType);
+        }
+
+        private void SetFill(object sender, RoutedEventArgs e)
+        {
+            _selection = "fill";
+            CanvasArea.Cursor = new Cursor("format-color-fill.cur");
         }
     }
 }
