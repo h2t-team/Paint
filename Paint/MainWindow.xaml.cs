@@ -15,6 +15,8 @@ using Button = Fluent.Button;
 using MaterialDesignThemes.Wpf;
 using System.ComponentModel;
 using System.Diagnostics;
+using Paint.DataType;
+using System.Windows.Documents;
 
 namespace Paint
 {
@@ -24,6 +26,8 @@ namespace Paint
     public partial class MainWindow : RibbonWindow
     {
         bool _isDrawing = false;
+        bool _isDragging = false;
+        bool _isEditing = false;
         List<IShape> _shapes = new List<IShape>();
         IShape _preview;
         string _selectedShapeName = "";
@@ -35,7 +39,81 @@ namespace Paint
         List<UIElement> _elements = new(); //Contain shape and image element.
         List<UIElement> _undoElements = new();
         List<UIElement> _redoElements = new();
+        CircleAdorner adoner;
+        private enum HitType
+        {
+            None, Body, UL, UR, LR, LL, T, B, L, R
+        };
+        HitType MouseHitType = HitType.None;
+        // The drag's last point.
+        private Point LastPoint;
+        private void GetLRTB(IShape shape, out double left, out double right, out double top, out double bottom)
+        {
+            left = shape.GetStart().X;
+            top = shape.GetStart().Y;
+            right = shape.GetEnd().X;
+            bottom = shape.GetEnd().Y;
+        }
+        private HitType SetHitType(IShape shape, Point point)
+        {
+            double left, top, right, bottom;
+            GetLRTB(shape, out left, out right, out top, out bottom);
+            if (point.X < left) return HitType.None;
+            if (point.X > right) return HitType.None;
+            if (point.Y < top) return HitType.None;
+            if (point.Y > bottom) return HitType.None;
 
+            const double GAP = 10;
+            if (point.X - left < GAP)
+            {
+                // Left edge.
+                if (Math.Abs(point.Y - top) < GAP) return HitType.UL;
+                if (Math.Abs(bottom - point.Y) < GAP) return HitType.LL;
+                return HitType.L;
+            }
+            else if (right - point.X < GAP)
+            {
+                // Right edge.
+                if (Math.Abs(point.Y - top) < GAP) return HitType.UR;
+                if (Math.Abs(bottom - point.Y) < GAP) return HitType.LR;
+                return HitType.R;
+            }
+            if (point.Y - top < GAP) return HitType.T;
+            if (bottom - point.Y < GAP) return HitType.B;
+            return HitType.Body;
+        }
+        private void SetMouseCursor()
+        {
+            // See what cursor we should display.
+            Cursor desired_cursor = Cursors.Cross;
+            switch (MouseHitType)
+            {
+                case HitType.None:
+                    desired_cursor = Cursors.Cross;
+                    break;
+                case HitType.Body:
+                    desired_cursor = Cursors.SizeAll;
+                    break;
+                case HitType.UL:
+                case HitType.LR:
+                    desired_cursor = Cursors.SizeNWSE;
+                    break;
+                case HitType.LL:
+                case HitType.UR:
+                    desired_cursor = Cursors.SizeNESW;
+                    break;
+                case HitType.T:
+                case HitType.B:
+                    desired_cursor = Cursors.SizeNS;
+                    break;
+                case HitType.L:
+                case HitType.R:
+                    desired_cursor = Cursors.SizeWE;
+                    break;
+            }
+            // Display the desired cursor.
+            if (Cursor != desired_cursor) Cursor = desired_cursor;
+        }
         public MainWindow()
         {
             InitializeComponent();
@@ -45,15 +123,40 @@ namespace Paint
         {
             if (_selection == "shape")
             {
-                //clone shape of preview with selected shape
-                _preview = _prototypes[_selectedShapeName].Clone();
-                _isDrawing = true;
-                //get start positon and save in HandleStart of preview
-                Point position = e.GetPosition(canvas);
-                _preview.HandleStart(position.X, position.Y);
-                _preview.OutlineColor = (Color)ColorGalleryStandard.SelectedColor;
-                _preview.PenWidth = _selectedPenWidth;
-                _preview.StrokeType = _strokeTypes[_selectedStrokeType];
+                if (_isEditing && MouseHitType == HitType.None)
+                {
+                    _isEditing = false;
+                    _isDragging = false;
+                    _shapes.Add(_preview);
+                    if (_elements.Count > 0)
+                        _undoElements.Add(_elements.Last());
+                    _elements.Add(_preview.Draw());
+                    DrawAll();
+                    return;
+                }
+                if (_isEditing)
+                {
+                    if (!_isDragging)
+                    {
+                        MouseHitType = SetHitType(_preview, Mouse.GetPosition(CanvasArea));
+                        SetMouseCursor();
+                        if (MouseHitType == HitType.None) return;
+                        LastPoint = Mouse.GetPosition(CanvasArea);
+                        _isDragging = true;
+                    }
+                }
+                else
+                {
+                    //clone shape of preview with selected shape
+                    _preview = _prototypes[_selectedShapeName].Clone();
+                    _isDrawing = true;
+                    //get start positon and save in HandleStart of preview
+                    Point position = e.GetPosition(canvas);
+                    _preview.HandleStart(position.X, position.Y);
+                    _preview.OutlineColor = (Color)ColorGalleryStandard.SelectedColor;
+                    _preview.PenWidth = _selectedPenWidth;
+                    _preview.StrokeType = _strokeTypes[_selectedStrokeType];
+                }
             }
             else if (_selection == "fill")
             {
@@ -69,15 +172,75 @@ namespace Paint
                 Point position = e.GetPosition(canvas);
                 //get current position
                 _preview.HandleEnd(position.X, position.Y);
-                //Clear all drawings
-                canvas.Children.Clear();
-                //Redraw all shapes that was saved before
-                foreach (var element in _elements)
-                {
-                    canvas.Children.Add(element);
-                }
+                DrawAll();
                 //Draw preview
                 canvas.Children.Add(_preview.Draw());
+            }
+            else if (_isEditing)
+            {
+                if (_isDragging)
+                {
+                    // See how much the mouse has moved.
+                    Point point = Mouse.GetPosition(CanvasArea);
+                    double offset_x = point.X - LastPoint.X;
+                    double offset_y = point.Y - LastPoint.Y;
+
+                    // Get the shape's current position.
+                    Point2D new_start = _preview.GetStart();
+                    Point2D new_end = _preview.GetEnd();
+
+                    // Update the shape.
+                    switch (MouseHitType)
+                    {
+                        case HitType.Body:
+                            new_start.X += offset_x;
+                            new_start.Y += offset_y;
+                            new_end.X += offset_x;
+                            new_end.Y += offset_y;
+                            break;
+                        case HitType.UL:
+                            new_start.X += offset_x;
+                            new_start.Y += offset_y;
+                            break;
+                        case HitType.UR:
+                            new_end.X += offset_x;
+                            new_start.Y += offset_y;
+                            break;
+                        case HitType.LR:
+                            new_end.X += offset_x;
+                            new_end.Y += offset_y;
+                            break;
+                        case HitType.LL:
+                            new_end.Y += offset_y;
+                            new_start.X += offset_x;
+                            break;
+                        case HitType.L:
+                            new_start.X += offset_x;
+                            break;
+                        case HitType.R:
+                            new_end.X += offset_x;
+                            break;
+                        case HitType.B:
+                            new_end.Y += offset_y;
+                            break;
+                        case HitType.T:
+                            new_start.Y += offset_y;
+                            break;
+                    }
+                    _preview.HandleStart(new_start.X, new_start.Y);
+                    _preview.HandleStart(new_start.X, new_start.Y);
+                    DrawAll();
+                    canvas.Children.Add(_preview.Draw());
+                    adoner = new CircleAdorner(canvas.Children[canvas.Children.Count - 1]);
+                    AdornerLayer.GetAdornerLayer(canvas.Children[canvas.Children.Count - 1]).Add(new CircleAdorner(canvas.Children[canvas.Children.Count - 1]));
+                    // Save the mouse's new location.
+                    LastPoint = point;
+                }
+                else
+                {
+                    MouseHitType = SetHitType(_preview, Mouse.GetPosition(CanvasArea));
+                    SetMouseCursor();
+                }
             }
         }
 
@@ -89,11 +252,13 @@ namespace Paint
                 //get end position and save in HandleEnd of preview
                 Point postion = e.GetPosition(canvas);
                 _preview.HandleEnd(postion.X, postion.Y);
-                //add preview to shapes
-                _shapes.Add(_preview);
-                if (_elements.Count() != 0)
-                    _undoElements.Add(_elements.Last());
-                _elements.Add(_preview.Draw());
+                _isEditing = true;
+                adoner = new CircleAdorner(canvas.Children[canvas.Children.Count - 1]);
+                AdornerLayer.GetAdornerLayer(canvas.Children[canvas.Children.Count - 1]).Add(adoner);
+            }
+            if (_isDragging)
+            {
+                _isDragging = false;
             }
         }
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -174,7 +339,7 @@ namespace Paint
             // default selection
             _selectedShapeName = lineShape.Name;
             _preview = _prototypes[_selectedShapeName].Clone();
-            CanvasArea.Cursor = Cursors.Cross;
+            //CanvasArea.Cursor = Cursors.Cross;
             _selection = "shape";
 
             //add the stroke types
@@ -191,7 +356,7 @@ namespace Paint
                 Btn.Click += SetStrokeType;
                 StrokeCombobox.Items.Add(Btn);
             }
-            
+
             _selectedStrokeType = _strokeTypes.First().Key;
         }
         private void prototypeButton_Click(object sender, RoutedEventArgs e)
@@ -199,7 +364,7 @@ namespace Paint
             var Btn = sender as System.Windows.Controls.Button;
             _selectedShapeName = Btn.Tag as string;
             _preview = _prototypes[_selectedShapeName];
-            CanvasArea.Cursor = Cursors.Cross;
+            //CanvasArea.Cursor = Cursors.Cross;
             _selection = "shape";
         }
 
@@ -237,10 +402,10 @@ namespace Paint
         private BitmapImage ConvertToBitmap(System.Drawing.Image img, string ext)
         {
             MemoryStream ms = new MemoryStream();
-            if(ext == ".png")
+            if (ext == ".png")
                 img.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
-            if(ext ==".jpg")
-                img.Save(ms, System.Drawing.Imaging.ImageFormat.Jpeg);               
+            if (ext == ".jpg")
+                img.Save(ms, System.Drawing.Imaging.ImageFormat.Jpeg);
 
             BitmapImage ix = new BitmapImage();
             ix.BeginInit();
@@ -358,7 +523,7 @@ namespace Paint
 
         }
         private void DrawAll()
-        {            
+        {
             canvas.Children.Clear();
             foreach (var element in _elements)
                 canvas.Children.Add(element);
@@ -411,6 +576,16 @@ namespace Paint
         {
             _selection = "fill";
             CanvasArea.Cursor = new Cursor("format-color-fill.cur");
+        }
+
+        private void canvas_MouseLeave(object sender, MouseEventArgs e)
+        {
+            Cursor = Cursors.Arrow;
+        }
+        private void canvas_MousEnter(object sender, MouseEventArgs e)
+        {
+            if(_selection == "shape")
+                Cursor = Cursors.Cross;
         }
     }
 }
