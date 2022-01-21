@@ -80,9 +80,9 @@ namespace Paint
                 canvas.Children.Add(_preview.Draw());
             }
         }
-                }
-            }
-        }
+
+        private void canvas_MouseUp(object sender, MouseButtonEventArgs e)
+        {
             if (_isDrawing == true)
             {
                 _isDrawing = false;
@@ -94,24 +94,6 @@ namespace Paint
                 if(_elements.Count() != 0)
                     _undoElements.Add(_elements.Last());
                 _elements.Add(_preview.Draw());
-            }
-        }
-                }
-            }
-        }
-                }
-            }
-        }
-                }
-            }
-        }
-                }
-            }
-        }
-                    if (_elements.Count() != 0)
-                        _undoElements.Add(_elements.Last());
-                    _elements.Add(_preview.Draw());
-                }
             }
         }
         private void Window_Loaded(object sender, RoutedEventArgs e)
