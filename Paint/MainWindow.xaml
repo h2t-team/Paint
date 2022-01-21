@@ -21,7 +21,7 @@
         MinWidth="900"
         Loaded="Window_Loaded" KeyDown="Paint_KeyDown">
     <DockPanel LastChildFill="True">
-        <Fluent:Ribbon DockPanel.Dock="Top">            
+        <Fluent:Ribbon DockPanel.Dock="Top">
             <Fluent:Ribbon.Menu>
                 <Fluent:Backstage Header="File">
                     <Fluent:BackstageTabControl>
@@ -170,11 +170,11 @@
                     <Canvas x:Name="canvas" Background="White" Height="460" Width="900">
                     </Canvas>
                     <Border 
-                Background="Transparent" 
-                Name="CanvasArea"
-                MouseDown="canvas_MouseDown"
-                MouseMove="canvas_MouseMove"
-                MouseUp="canvas_MouseUp">
+                        Background="Transparent" 
+                        Name="CanvasArea"
+                        MouseDown="canvas_MouseDown"
+                        MouseMove="canvas_MouseMove"
+                        MouseUp="canvas_MouseUp">
                     </Border>
                 </Grid>
             </ScrollViewer>
