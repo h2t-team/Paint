@@ -174,7 +174,8 @@
                         Name="CanvasArea"
                         MouseDown="canvas_MouseDown"
                         MouseMove="canvas_MouseMove"
-                        MouseUp="canvas_MouseUp">
+                        MouseUp="canvas_MouseUp"
+                        MouseLeave="canvas_MouseLeave">
                     </Border>
                 </Grid>
             </ScrollViewer>
