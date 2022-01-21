@@ -21,7 +21,7 @@
         MinWidth="900"
         Loaded="Window_Loaded" KeyDown="Paint_KeyDown">
     <DockPanel LastChildFill="True">
-        <Fluent:Ribbon DockPanel.Dock="Top">            
+        <Fluent:Ribbon DockPanel.Dock="Top">
             <Fluent:Ribbon.Menu>
                 <Fluent:Backstage Header="File">
                     <Fluent:BackstageTabControl>
@@ -35,21 +35,11 @@
             <Fluent:RibbonTabItem Header="Home">
                 <Fluent:RibbonGroupBox>
                     <Fluent:Button Header="Undo" Click="Undo_Click">
-                        <Fluent:Button.ToolTip>
-                            <Fluent:ScreenTip 
-                                Title="Undo (Ctrl + Z)"
-                                Text="Undo" Width="150"/>
-                        </Fluent:Button.ToolTip>
                         <Fluent:Button.Icon>
                             <materialDesign:PackIcon Kind="Undo" Height="30" Width="30"/>
                         </Fluent:Button.Icon>
                     </Fluent:Button>
                     <Fluent:Button Header="Redo" Click="Redo_Click">
-                        <Fluent:Button.ToolTip>
-                            <Fluent:ScreenTip 
-                                Title="Redo (Ctrl + Y)"
-                                Text="Redo" Width="150"/>
-                        </Fluent:Button.ToolTip>
                         <Fluent:Button.Icon>
                             <materialDesign:PackIcon Kind="Redo" Height="30" Width="30"/>
                         </Fluent:Button.Icon>
@@ -59,8 +49,7 @@
                     <Fluent:Button 
                         Tag="Line" 
                         Click="prototypeButton_Click" 
-                        SizeDefinition="Small"
-                        ToolTip="Line">
+                        SizeDefinition="Small">
                         <Fluent:Button.LargeIcon>
                             <materialDesign:PackIcon Kind="VectorLine"/>
                         </Fluent:Button.LargeIcon>
@@ -89,33 +78,18 @@
                     </Fluent:DropDownButton>
                     <Fluent:DropDownButton Header="Width" Name="WidthCombobox">
                         <Fluent:DropDownButton.Icon>
-                            <materialDesign:PackIcon
+                            <materialDesign:PackIcon 
                                 Kind="DrawPen" 
                                 HorizontalAlignment="Center" 
                                 VerticalAlignment="Center" 
                                 Width="30" Height="30"/>
                         </Fluent:DropDownButton.Icon>
-                        <Button Tag="1" Click="SetPenWidth" Style="{StaticResource MaterialDesignFlatDarkButton}">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="1px" FontSize="15"></TextBlock>
-                                <Border Height="1" Width="60" Background="Black" Margin="10 0 20 0"></Border>
-                            </StackPanel>
-                        </Button>
-                        <Button Tag="3" Click="SetPenWidth" Style="{StaticResource MaterialDesignFlatDarkButton}">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="3px" FontSize="15"></TextBlock>
-                                <Border Height="3" Width="60" Background="Black" Margin="10 0 20 0"></Border>
-                            </StackPanel>
-                        </Button>
-                        <Button Tag="5" Click="SetPenWidth" Style="{StaticResource MaterialDesignFlatDarkButton}">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="5px" FontSize="15"></TextBlock>
-                                <Border Height="5" Width="60" Background="Black" Margin="10 0 20 0"></Border>
-                            </StackPanel>
-                        </Button>
-                        <Fluent:DropDownButton.ItemTemplate>
+                        <Fluent:Button Header="1pt" Tag="1" Click="SetPenWidth"></Fluent:Button>
+                        <Fluent:Button Header="3pt" Tag="3" Click="SetPenWidth"></Fluent:Button>
+                        <Fluent:Button Header="5pt" Tag="5" Click="SetPenWidth"></Fluent:Button>
+                        <!--<Fluent:DropDownButton.ItemTemplate>
                             <DataTemplate>
-                                <StackPanel Background="red" Margin="0" Orientation="Horizontal" VerticalAlignment="Center" x:Name="PenWidthItem">
+                                <StackPanel Margin="0" Orientation="Horizontal" VerticalAlignment="Center" x:Name="PenWidthItem">
                                     <TextBlock Text="{Binding}" FontSize="15"></TextBlock>
                                     <TextBlock Text="pt" FontSize="15"></TextBlock>
                                     <Border Height="{Binding}" Width="60" Background="Black" Margin="10 0 20 0"></Border>
@@ -125,8 +99,8 @@
                                         <Setter TargetName="PenWidthItem" Property="Background" Value="Red"/>
                                     </Trigger>
                                 </DataTemplate.Triggers>
-                            </DataTemplate>
-                        </Fluent:DropDownButton.ItemTemplate>
+                            </DataTemplate>-->
+                        <!--</Fluent:DropDownButton.ItemTemplate>-->
                     </Fluent:DropDownButton>
                     <Fluent:DropDownButton Header="Stroke" Name="StrokeCombobox">
                         <Fluent:DropDownButton.Icon>
@@ -136,7 +110,6 @@
                                 VerticalAlignment="Center" 
                                 Width="30" Height="30"/>
                         </Fluent:DropDownButton.Icon>
-
                         <!--<Fluent:DropDownButton.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -146,22 +119,15 @@
                             </DataTemplate>
                         </Fluent:DropDownButton.ItemTemplate>-->
                     </Fluent:DropDownButton>
+
                 </Fluent:RibbonGroupBox>
-                <Fluent:RibbonGroupBox Header="Tools">
-                    <Fluent:Button 
-                        SizeDefinition="Large" 
-                        ToolTip="Fill" 
-                        Header="Fill"
-                        Click="SetFill">
+                <!--<Fluent:RibbonGroupBox Header="Tools">
+                    <Fluent:Button SizeDefinition="Small" ToolTip="Fill">
                         <Fluent:Button.LargeIcon>
-                            <materialDesign:PackIcon
-                                Kind="FormatColorFill"  
-                                HorizontalAlignment="Center" 
-                                VerticalAlignment="Center"
-                                Width="30" Height="30"/>
+                            <materialDesign:PackIcon Kind="FormatColorFill" />
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
-                </Fluent:RibbonGroupBox>
+                </Fluent:RibbonGroupBox>-->
             </Fluent:RibbonTabItem>
         </Fluent:Ribbon>
         <Grid>
@@ -170,11 +136,11 @@
                     <Canvas x:Name="canvas" Background="White" Height="460" Width="900">
                     </Canvas>
                     <Border 
-                Background="Transparent" 
-                Name="CanvasArea"
-                MouseDown="canvas_MouseDown"
-                MouseMove="canvas_MouseMove"
-                MouseUp="canvas_MouseUp">
+                        Background="Transparent" 
+                        Name="CanvasArea"
+                        MouseDown="canvas_MouseDown"
+                        MouseMove="canvas_MouseMove"
+                        MouseUp="canvas_MouseUp">
                     </Border>
                 </Grid>
             </ScrollViewer>
