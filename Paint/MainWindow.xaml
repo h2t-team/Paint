@@ -84,7 +84,8 @@
                             x:Name="ColorGalleryStandard"
                             Mode="StandardColors" 
                             IsAutomaticColorButtonVisible="False"
-                            SelectedColor="Black">
+                            SelectedColor="Black"
+                            SelectedColorChanged="ColorGalleryStandard_SelectedColorChanged">
                         </Fluent:ColorGallery>
                     </Fluent:DropDownButton>
                     <Fluent:DropDownButton Header="Width" Name="WidthCombobox">

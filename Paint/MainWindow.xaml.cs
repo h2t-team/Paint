@@ -58,20 +58,20 @@ namespace Paint
         {
             double left, top, right, bottom;
             GetLRTB(shape, out left, out right, out top, out bottom);
-            if (point.X < left) return HitType.None;
-            if (point.X > right) return HitType.None;
-            if (point.Y < top) return HitType.None;
-            if (point.Y > bottom) return HitType.None;
-
             const double GAP = 10;
-            if (point.X - left < GAP)
+            if (point.X < left - GAP) return HitType.None;
+            if (point.X > right + GAP) return HitType.None;
+            if (point.Y < top - GAP) return HitType.None;
+            if (point.Y > bottom + GAP) return HitType.None;
+
+            if (Math.Abs(point.X - left) < GAP)
             {
                 // Left edge.
                 if (Math.Abs(point.Y - top) < GAP) return HitType.UL;
                 if (Math.Abs(bottom - point.Y) < GAP) return HitType.LL;
                 return HitType.L;
             }
-            else if (right - point.X < GAP)
+            else if (Math.Abs(right - point.X) < GAP)
             {
                 // Right edge.
                 if (Math.Abs(point.Y - top) < GAP) return HitType.UR;
@@ -166,7 +166,6 @@ namespace Paint
                 Debug.WriteLine("fill");
             }
         }
-
         private void canvas_MouseMove(object sender, MouseEventArgs e)
         {
             //If drawing
@@ -246,7 +245,6 @@ namespace Paint
                 }
             }
         }
-
         private void canvas_MouseUp(object sender, MouseButtonEventArgs e)
         {
             if (_isDrawing == true)
@@ -369,7 +367,6 @@ namespace Paint
             _preview = _prototypes[_selectedShapeName];
             _selection = "shape";
         }
-
         private void Export_Click(object sender, RoutedEventArgs e)
         {
             EndEdit();
@@ -467,7 +464,6 @@ namespace Paint
                 }
             }
         }
-
         private void Save_Click(object sender, RoutedEventArgs e)
         {
             EndEdit();
@@ -486,14 +482,12 @@ namespace Paint
                 File.WriteAllText(dialog.FileName, textout);
             }
         }
-
         private void New_Click(object sender, RoutedEventArgs e)
         {
             canvas.Children.Clear();
             _shapes.Clear();
             _preview = _prototypes["Line"].Clone();
         }
-
         private void Paint_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.V && Keyboard.IsKeyDown(Key.LeftCtrl))
@@ -562,26 +556,38 @@ namespace Paint
         {
             HandleRedo();
         }
-
         private void SetPenWidth(object sender, RoutedEventArgs e)
         {
             WidthCombobox.IsDropDownOpen = false;
             var Btn = sender as System.Windows.Controls.Button;
             _selectedPenWidth = int.Parse((string)Btn.Tag);
+            if (_isEditing)
+            {
+                _preview.PenWidth = _selectedPenWidth;
+                DrawAll();
+                canvas.Children.Add(_preview.Draw());
+                adoner = new CircleAdorner(canvas.Children[canvas.Children.Count - 1]);
+                AdornerLayer.GetAdornerLayer(canvas.Children[canvas.Children.Count - 1]).Add(adoner);
+            }
         }
-
         private void SetStrokeType(object sender, RoutedEventArgs e)
         {
             var Btn = sender as Button;
             _selectedStrokeType = (string)Btn.Tag;
+            if (_isEditing) 
+            {
+                _preview.StrokeType = _strokeTypes[_selectedStrokeType];
+                DrawAll();
+                canvas.Children.Add(_preview.Draw());
+                adoner = new CircleAdorner(canvas.Children[canvas.Children.Count - 1]);
+                AdornerLayer.GetAdornerLayer(canvas.Children[canvas.Children.Count - 1]).Add(adoner);
+            }
         }
-
         private void SetFill(object sender, RoutedEventArgs e)
         {
             EndEdit();
             _selection = "fill";
         }
-
         private void canvas_MouseLeave(object sender, MouseEventArgs e)
         {
             Cursor = Cursors.Arrow;
@@ -592,6 +598,17 @@ namespace Paint
                 Cursor = Cursors.Cross;
             else if(_selection == "fill")
                 CanvasArea.Cursor = new Cursor("format-color-fill.cur");
+        }
+        private void ColorGalleryStandard_SelectedColorChanged(object sender, RoutedEventArgs e)
+        {
+            if (_isEditing)
+            {
+                _preview.OutlineColor = (Color)ColorGalleryStandard.SelectedColor;
+                DrawAll();
+                canvas.Children.Add(_preview.Draw());
+                adoner = new CircleAdorner(canvas.Children[canvas.Children.Count - 1]);
+                AdornerLayer.GetAdornerLayer(canvas.Children[canvas.Children.Count - 1]).Add(adoner);
+            }
         }
     }
 }

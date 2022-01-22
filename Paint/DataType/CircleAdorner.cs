@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,7 +18,16 @@ namespace Paint.DataType
 
         protected override void OnRender(DrawingContext drawingContext)
         {
-            Rect adornedElementRect = new Rect(this.AdornedElement.DesiredSize);
+            Rect adornedElementRect;
+            if(AdornedElement.GetType() == typeof(System.Windows.Shapes.Line)){
+                double x1 = ((System.Windows.Shapes.Line)AdornedElement).X1;
+                double y1 = ((System.Windows.Shapes.Line)AdornedElement).Y1;
+                double x2 = ((System.Windows.Shapes.Line)AdornedElement).X2;
+                double y2 = ((System.Windows.Shapes.Line)AdornedElement).Y2;
+                adornedElementRect = new Rect(new Point(x1,y1), new Point(x2,y2));
+            }
+            else
+                adornedElementRect = new Rect(this.AdornedElement.RenderSize);
 
             // circle drawing.
             Pen circlePen = new Pen(new SolidColorBrush(Colors.Gray), 1.5);
