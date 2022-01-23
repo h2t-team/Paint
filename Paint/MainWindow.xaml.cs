@@ -120,7 +120,7 @@ namespace Paint
         }
         private void EndEdit()
         {
-            if (_isEditing && MouseHitType == HitType.None)
+            if (_isEditing)
             {
                 _isEditing = false;
                 _isDragging = false;
@@ -129,6 +129,8 @@ namespace Paint
                     _undoElements.Add(_elements.Last());
                 _elements.Add(_preview.Draw());
                 DrawAll();
+                MouseHitType = HitType.None;
+                SetMouseCursor();
                 return;
             }
         }
@@ -136,7 +138,8 @@ namespace Paint
         {
             if (_selection == "shape")
             {
-                EndEdit();
+                if(MouseHitType == HitType.None)
+                    EndEdit();
                 if (_isEditing)
                 {
                     if (!_isDragging)
@@ -253,6 +256,8 @@ namespace Paint
                 //get end position and save in HandleEnd of preview
                 Point postion = e.GetPosition(canvas);
                 _preview.HandleEnd(postion.X, postion.Y);
+                if (_preview.GetStart().X == _preview.GetEnd().X && _preview.GetStart().Y == _preview.GetEnd().Y)
+                    return;
                 _isEditing = true;
                 adoner = new CircleAdorner(canvas.Children[canvas.Children.Count - 1]);
                 AdornerLayer.GetAdornerLayer(canvas.Children[canvas.Children.Count - 1]).Add(adoner);
@@ -428,7 +433,6 @@ namespace Paint
                         return;
                     _shapes.Clear();
                     _elements.Clear();
-                    canvas.Children.Clear();
                     IShape shape;
                     for (int i = 1; i < lines.Length; i++)
                     {
@@ -436,10 +440,12 @@ namespace Paint
                         shape = _prototypes[split[0]].Clone();
                         shape.HandleStart(Double.Parse(split[1]), Double.Parse(split[2]));
                         shape.HandleEnd(Double.Parse(split[3]), Double.Parse(split[4]));
-                        shape.OutlineColor = (Color)ColorGalleryStandard.SelectedColor;
+                        shape.StrokeType = _strokeTypes[split[5]];
+                        shape.PenWidth = int.Parse(split[6]);
+                        shape.OutlineColor = (Color)ColorConverter.ConvertFromString(split[7]);
                         _shapes.Add(shape);
                         _elements.Add(shape.Draw());
-                        canvas.Children.Add(shape.Draw());
+                        DrawAll();
                     }
                 }
                 else
@@ -464,6 +470,17 @@ namespace Paint
                 }
             }
         }
+        private string FindStrokeType(DoubleCollection stroke)
+        {
+            foreach(var item in _strokeTypes)
+            {
+                if(item.Value.SequenceEqual(stroke))
+                {
+                    return item.Key;
+                }
+            }
+            return "";
+        }
         private void Save_Click(object sender, RoutedEventArgs e)
         {
             EndEdit();
@@ -475,9 +492,10 @@ namespace Paint
                 string textout = "PaintSaveFile" + Environment.NewLine;
                 foreach (var item in _shapes)
                 {
-                    //Name startX startY endX endY
+                    //Name startX startY endX endY stroketype width color
                     textout += $"{item.Name} {item.GetStart().X} {item.GetStart().Y} " +
-                        $"{item.GetEnd().X} {item.GetEnd().Y}" + Environment.NewLine;
+                        $"{item.GetEnd().X} {item.GetEnd().Y} {FindStrokeType(item.StrokeType)} " +
+                        $"{item.PenWidth} {item.OutlineColor.ToString()}" + Environment.NewLine;
                 }
                 File.WriteAllText(dialog.FileName, textout);
             }
@@ -528,6 +546,7 @@ namespace Paint
         }
         private void HandleUndo()
         {
+            EndEdit();
             if (_elements.Count() != 0)
             {
                 _redoElements.Add(_elements.Last());
@@ -543,6 +562,7 @@ namespace Paint
         }
         private void HandleRedo()
         {
+            EndEdit();
             if (_redoElements.Count() != 0)
             {
                 if (_elements.Count() != 0)
