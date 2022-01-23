@@ -120,7 +120,7 @@ namespace Paint
         }
         private void EndEdit()
         {
-            if (_isEditing && MouseHitType == HitType.None)
+            if (_isEditing)
             {
                 _isEditing = false;
                 _isDragging = false;
@@ -129,6 +129,8 @@ namespace Paint
                     _undoElements.Add(_elements.Last());
                 _elements.Add(_preview.Draw());
                 DrawAll();
+                MouseHitType = HitType.None;
+                SetMouseCursor();
                 return;
             }
         }
@@ -136,7 +138,8 @@ namespace Paint
         {
             if (_selection == "shape")
             {
-                EndEdit();
+                if(MouseHitType == HitType.None)
+                    EndEdit();
                 if (_isEditing)
                 {
                     if (!_isDragging)
@@ -253,6 +256,8 @@ namespace Paint
                 //get end position and save in HandleEnd of preview
                 Point postion = e.GetPosition(canvas);
                 _preview.HandleEnd(postion.X, postion.Y);
+                if (_preview.GetStart().X == _preview.GetEnd().X && _preview.GetStart().Y == _preview.GetEnd().Y)
+                    return;
                 _isEditing = true;
                 adoner = new CircleAdorner(canvas.Children[canvas.Children.Count - 1]);
                 AdornerLayer.GetAdornerLayer(canvas.Children[canvas.Children.Count - 1]).Add(adoner);
@@ -528,6 +533,7 @@ namespace Paint
         }
         private void HandleUndo()
         {
+            EndEdit();
             if (_elements.Count() != 0)
             {
                 _redoElements.Add(_elements.Last());
@@ -543,6 +549,7 @@ namespace Paint
         }
         private void HandleRedo()
         {
+            EndEdit();
             if (_redoElements.Count() != 0)
             {
                 if (_elements.Count() != 0)
