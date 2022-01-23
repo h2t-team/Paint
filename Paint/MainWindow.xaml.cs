@@ -428,7 +428,6 @@ namespace Paint
                         return;
                     _shapes.Clear();
                     _elements.Clear();
-                    canvas.Children.Clear();
                     IShape shape;
                     for (int i = 1; i < lines.Length; i++)
                     {
@@ -436,10 +435,12 @@ namespace Paint
                         shape = _prototypes[split[0]].Clone();
                         shape.HandleStart(Double.Parse(split[1]), Double.Parse(split[2]));
                         shape.HandleEnd(Double.Parse(split[3]), Double.Parse(split[4]));
-                        shape.OutlineColor = (Color)ColorGalleryStandard.SelectedColor;
+                        shape.StrokeType = _strokeTypes[split[5]];
+                        shape.PenWidth = int.Parse(split[6]);
+                        shape.OutlineColor = (Color)ColorConverter.ConvertFromString(split[7]);
                         _shapes.Add(shape);
                         _elements.Add(shape.Draw());
-                        canvas.Children.Add(shape.Draw());
+                        DrawAll();
                     }
                 }
                 else
@@ -464,6 +465,17 @@ namespace Paint
                 }
             }
         }
+        private string FindStrokeType(DoubleCollection stroke)
+        {
+            foreach(var item in _strokeTypes)
+            {
+                if(item.Value.SequenceEqual(stroke))
+                {
+                    return item.Key;
+                }
+            }
+            return "";
+        }
         private void Save_Click(object sender, RoutedEventArgs e)
         {
             EndEdit();
@@ -475,9 +487,10 @@ namespace Paint
                 string textout = "PaintSaveFile" + Environment.NewLine;
                 foreach (var item in _shapes)
                 {
-                    //Name startX startY endX endY
+                    //Name startX startY endX endY stroketype width color
                     textout += $"{item.Name} {item.GetStart().X} {item.GetStart().Y} " +
-                        $"{item.GetEnd().X} {item.GetEnd().Y}" + Environment.NewLine;
+                        $"{item.GetEnd().X} {item.GetEnd().Y} {FindStrokeType(item.StrokeType)} " +
+                        $"{item.PenWidth} {item.OutlineColor.ToString()}" + Environment.NewLine;
                 }
                 File.WriteAllText(dialog.FileName, textout);
             }
