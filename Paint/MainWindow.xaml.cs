@@ -163,7 +163,7 @@ namespace Paint
             }
             else if (_selection == "fill")
             {
-                Debug.WriteLine("fill");
+                
             }
         }
         private void canvas_MouseMove(object sender, MouseEventArgs e)
