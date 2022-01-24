@@ -166,6 +166,13 @@ namespace Paint
             }
             else if (_selection == "fill")
             {
+                Point position = e.GetPosition(canvas);
+                Debug.WriteLine(position);
+                HitTestResult hitTestResult = VisualTreeHelper.HitTest(canvas, position);
+                var shape = hitTestResult.VisualHit as IShape;
+
+                if (shape == null)
+                    return;
                 
             }
         }
@@ -612,9 +619,9 @@ namespace Paint
         {
             Cursor = Cursors.Arrow;
         }
-        private void canvas_MousEnter(object sender, MouseEventArgs e)
+        private void canvas_MouseEnter(object sender, MouseEventArgs e)
         {
-            if(_selection == "shape")
+            if (_selection == "shape")
                 Cursor = Cursors.Cross;
             else if(_selection == "fill")
                 CanvasArea.Cursor = new Cursor("format-color-fill.cur");

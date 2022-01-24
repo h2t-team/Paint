@@ -177,7 +177,7 @@
                         MouseMove="canvas_MouseMove"
                         MouseUp="canvas_MouseUp"
                         MouseLeave="canvas_MouseLeave"
-                        MouseEnter="canvas_MousEnter">
+                        MouseEnter="canvas_MouseEnter">
                     </Border>
                 </Grid>
             </ScrollViewer>
