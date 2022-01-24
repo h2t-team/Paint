@@ -10,6 +10,7 @@ namespace Contract
         Color OutlineColor { get; set; }
         int PenWidth { get; set; }
         public DoubleCollection StrokeType { get; set; }
+        Color FillColor { get; set; }
         void HandleStart(double x, double y);
         void HandleEnd(double x, double y);
 

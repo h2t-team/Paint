@@ -17,6 +17,7 @@ namespace Line2D
         public Color OutlineColor { get; set; }
         public int PenWidth { get; set; }
         public DoubleCollection StrokeType { get; set; }
+        public Color FillColor { get; set; }
 
         public void HandleStart(double x, double y)
         {
@@ -51,7 +52,8 @@ namespace Line2D
                 Y2 = _end.Y,
                 StrokeThickness = PenWidth,
                 Stroke = new SolidColorBrush(OutlineColor),
-                StrokeDashArray = StrokeType
+                StrokeDashArray = StrokeType,
+                Fill = new SolidColorBrush(FillColor)
         };
             return l;
         }

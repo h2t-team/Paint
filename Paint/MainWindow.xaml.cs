@@ -17,6 +17,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using Paint.DataType;
 using System.Windows.Documents;
+using System.Windows.Shapes;
 
 namespace Paint
 {
@@ -162,20 +163,35 @@ namespace Paint
                     _preview.OutlineColor = (Color)ColorGalleryStandard.SelectedColor;
                     _preview.PenWidth = _selectedPenWidth;
                     _preview.StrokeType = _strokeTypes[_selectedStrokeType];
+                    _preview.FillColor = Colors.Transparent;
                 }
             }
             else if (_selection == "fill")
             {
                 IShape cur = null;
-                Point position = e.GetPosition(canvas);
-                foreach (var item in _shapes)
+                Point pt = e.GetPosition(canvas);
+                HitTestResult result = VisualTreeHelper.HitTest(canvas, pt);
+                if (result != null)
                 {
-                    MouseHitType = SetHitType(item, position);
-                    if (MouseHitType != HitType.None)
+                    if (result.VisualHit is Shape)
                     {
-                        cur = item;
-                        Debug.WriteLine(cur);
-                        
+                        foreach (var item in _shapes)
+                        {
+                            MouseHitType = SetHitType(item, pt);
+                            if (MouseHitType != HitType.None)
+                            {
+                                cur = item;
+                                cur.FillColor = (Color)ColorGalleryStandard.SelectedColor;
+                            }
+                        }
+                        Shape shape = result.VisualHit as Shape;
+                        shape.Fill = new SolidColorBrush((Color)ColorGalleryStandard.SelectedColor);
+                        Debug.WriteLine(shape);
+                    }
+                    else if (result.VisualHit is Canvas)
+                    {
+                        //canvas.Color
+                        canvas.Background = new SolidColorBrush((Color)ColorGalleryStandard.SelectedColor);
                     }
                 }
             }

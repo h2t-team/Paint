@@ -14,10 +14,10 @@ namespace Contract
         public double X { get; set; }
         public double Y { get; set; }
         public string Name => "Point";
-
         public Color OutlineColor { get; set; }
         public int PenWidth { get; set; }
         public DoubleCollection StrokeType { get; set; }
+        public Color FillColor { get; set; }
 
         public IShape Clone()
         {
@@ -55,7 +55,8 @@ namespace Contract
                 Y2 = Y,
                 StrokeThickness = PenWidth,
                 Stroke = new SolidColorBrush(OutlineColor),
-                StrokeDashArray = StrokeType
+                StrokeDashArray = StrokeType,
+                Fill = new SolidColorBrush(FillColor)
             };
 
             return l;
