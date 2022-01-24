@@ -49,10 +49,10 @@ namespace Paint
         private Point LastPoint;
         private void GetLRTB(IShape shape, out double left, out double right, out double top, out double bottom)
         {
-            left = shape.GetStart().X;
-            top = shape.GetStart().Y;
-            right = shape.GetEnd().X;
-            bottom = shape.GetEnd().Y;
+            left = shape.GetStart().X < shape.GetEnd().X ? shape.GetStart().X : shape.GetEnd().X;
+            top = shape.GetStart().Y < shape.GetEnd().Y ? shape.GetStart().Y : shape.GetEnd().Y;
+            right = shape.GetStart().X > shape.GetEnd().X ? shape.GetStart().X : shape.GetEnd().X;
+            bottom = shape.GetStart().Y > shape.GetEnd().Y ? shape.GetStart().Y : shape.GetEnd().Y;
         }
         private HitType SetHitType(IShape shape, Point point)
         {
@@ -202,55 +202,63 @@ namespace Paint
                     double offset_y = point.Y - LastPoint.Y;
 
                     // Get the shape's current position.
-                    Point2D new_start = _preview.GetStart();
-                    Point2D new_end = _preview.GetEnd();
-
+                    double left, top, right, bottom;
+                    GetLRTB(_preview, out left, out right, out top, out bottom);
+                    Point2D new_start = new Point2D();
+                    Point2D new_end = new Point2D();
                     // Update the shape.
                     switch (MouseHitType)
                     {
                         case HitType.Body:
-                            new_start.X += offset_x;
-                            new_start.Y += offset_y;
-                            new_end.X += offset_x;
-                            new_end.Y += offset_y;
+                            left += offset_x;
+                            right += offset_x;
+                            top += offset_y;
+                            bottom += offset_y;
                             break;
                         case HitType.UL:
-                            new_start.X += offset_x;
-                            new_start.Y += offset_y;
+                            left += offset_x;
+                            top += offset_y;
                             break;
                         case HitType.UR:
-                            new_end.X += offset_x;
-                            new_start.Y += offset_y;
+                            top += offset_y;
+                            right += offset_x;
                             break;
                         case HitType.LR:
-                            new_end.X += offset_x;
-                            new_end.Y += offset_y;
+                            bottom += offset_y;
+                            right += offset_x;
                             break;
                         case HitType.LL:
-                            new_end.Y += offset_y;
-                            new_start.X += offset_x;
+                            bottom += offset_y;
+                            left += offset_x;
                             break;
                         case HitType.L:
-                            new_start.X += offset_x;
+                            left += offset_x;
                             break;
                         case HitType.R:
-                            new_end.X += offset_x;
+                            right += offset_x;
                             break;
                         case HitType.B:
-                            new_end.Y += offset_y;
+                            bottom += offset_y;
                             break;
                         case HitType.T:
-                            new_start.Y += offset_y;
+                            top += offset_y;
                             break;
                     }
-                    _preview.HandleStart(new_start.X, new_start.Y);
-                    _preview.HandleStart(new_start.X, new_start.Y);
-                    DrawAll();
-                    canvas.Children.Add(_preview.Draw());
-                    adoner = new CircleAdorner(canvas.Children[canvas.Children.Count - 1]);
-                    AdornerLayer.GetAdornerLayer(canvas.Children[canvas.Children.Count - 1]).Add(new CircleAdorner(canvas.Children[canvas.Children.Count - 1]));
-                    // Save the mouse's new location.
-                    LastPoint = point;
+                    if (left < right && top < bottom)
+                    {
+                        new_start.X = _preview.GetStart().X < _preview.GetEnd().X ? left : right;
+                        new_start.Y = _preview.GetStart().Y < _preview.GetEnd().Y ? top : bottom;
+                        new_end.X = _preview.GetStart().X > _preview.GetEnd().X ? left : right;
+                        new_end.Y = _preview.GetStart().Y > _preview.GetEnd().Y ? top : bottom;
+                        _preview.HandleStart(new_start.X,new_start.Y);
+                        _preview.HandleEnd(new_end.X,new_end.Y);
+                        DrawAll();
+                        canvas.Children.Add(_preview.Draw());
+                        adoner = new CircleAdorner(canvas.Children[canvas.Children.Count - 1]);
+                        AdornerLayer.GetAdornerLayer(canvas.Children[canvas.Children.Count - 1]).Add(new CircleAdorner(canvas.Children[canvas.Children.Count - 1]));
+                        // Save the mouse's new location.
+                        LastPoint = point;
+                    }
                 }
                 else
                 {
