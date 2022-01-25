@@ -38,6 +38,8 @@ namespace Paint
         Dictionary<string, IShape> _prototypes = new Dictionary<string, IShape>();
         Dictionary<string, DoubleCollection> _strokeTypes = new Dictionary<string, DoubleCollection>();
         List<UIElement> _elements = new(); //Contain shape and image element.
+        Stack<State> _undoStates = new();
+        Stack<State> _redoStates = new();
         List<UIElement> _undoElements = new();
         List<UIElement> _redoElements = new();
         CircleAdorner adoner;
@@ -123,6 +125,8 @@ namespace Paint
         {
             if (_isEditing)
             {
+                _redoStates.Clear();
+                SaveUndoState();
                 _isEditing = false;
                 _isDragging = false;
                 _shapes.Add(_preview);
@@ -139,8 +143,10 @@ namespace Paint
         {
             if (_selection == "shape")
             {
-                if(MouseHitType == HitType.None)
+                if (MouseHitType == HitType.None)
+                {
                     EndEdit();
+                }
                 if (_isEditing)
                 {
                     if (!_isDragging)
@@ -175,6 +181,8 @@ namespace Paint
                 {
                     if (result.VisualHit is Shape)
                     {
+                        State state = new(_elements, canvas.Background.ToString());
+                        _undoStates.Push(state);
                         foreach (var item in _shapes)
                         {
                             MouseHitType = SetHitType(item, pt);
@@ -186,11 +194,11 @@ namespace Paint
                         }
                         Shape shape = result.VisualHit as Shape;
                         shape.Fill = new SolidColorBrush((Color)ColorGalleryStandard.SelectedColor);
-                        Debug.WriteLine(shape);
                     }
                     else if (result.VisualHit is Canvas)
                     {
                         //canvas.Color
+                        SaveUndoState();
                         canvas.Background = new SolidColorBrush((Color)ColorGalleryStandard.SelectedColor);
                     }
                 }
@@ -478,10 +486,11 @@ namespace Paint
                         shape.StrokeType = _strokeTypes[split[5]];
                         shape.PenWidth = int.Parse(split[6]);
                         shape.OutlineColor = (Color)ColorConverter.ConvertFromString(split[7]);
+                        shape.FillColor = (Color)ColorConverter.ConvertFromString(split[8]);
                         _shapes.Add(shape);
                         _elements.Add(shape.Draw());
-                        DrawAll();
                     }
+                    DrawAll();
                 }
                 else
                 {
@@ -527,10 +536,10 @@ namespace Paint
                 string textout = "PaintSaveFile" + Environment.NewLine;
                 foreach (var item in _shapes)
                 {
-                    //Name startX startY endX endY stroketype width color
+                    //Name startX startY endX endY stroketype width strokecolor fillcolor
                     textout += $"{item.Name} {item.GetStart().X} {item.GetStart().Y} " +
                         $"{item.GetEnd().X} {item.GetEnd().Y} {FindStrokeType(item.StrokeType)} " +
-                        $"{item.PenWidth} {item.OutlineColor.ToString()}" + Environment.NewLine;
+                        $"{item.PenWidth} {item.OutlineColor.ToString()} {item.FillColor.ToString()}" + Environment.NewLine;
                 }
                 File.WriteAllText(dialog.FileName, textout);
             }
@@ -579,17 +588,32 @@ namespace Paint
             foreach (var element in _elements)
                 canvas.Children.Add(element);
         }
+        private void SaveUndoState()
+        {
+            State state = new(_elements, canvas.Background.ToString());
+            if (_undoStates.Count==0 || !_undoStates.Peek().Equals(state))
+            {
+                _undoStates.Push(state);
+            }
+
+        }
+        private void LoadState(State state)
+        {
+            _elements.Clear();
+            _elements = new(state.Elements);
+            canvas.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(state.Background));
+            DrawAll();
+        }
         private void HandleUndo()
         {
             EndEdit();
-            if (_elements.Count() != 0)
+            if(_undoStates.Count != 0)
             {
-                _redoElements.Add(_elements.Last());
-                _elements.RemoveAt(_elements.Count() - 1);
+                State redoState = new State(_elements, canvas.Background.ToString());
+                _redoStates.Push(redoState);
+                State undoState = _undoStates.Pop();
+                LoadState(undoState);
             }
-            if (_undoElements.Count() != 0)
-                _undoElements.RemoveAt(_undoElements.Count() - 1);
-            DrawAll();
         }
         private void Undo_Click(object sender, RoutedEventArgs e)
         {
@@ -597,15 +621,13 @@ namespace Paint
         }
         private void HandleRedo()
         {
-            EndEdit();
-            if (_redoElements.Count() != 0)
+            if (_redoStates.Count != 0)
             {
-                if (_elements.Count() != 0)
-                    _undoElements.Add(_elements.Last());
-                _elements.Add(_redoElements.Last());
-                _redoElements.RemoveAt(_redoElements.Count() - 1);
+                State undoState = new State(_elements, canvas.Background.ToString());
+                _undoStates.Push(undoState);
+                State redoState = _redoStates.Pop();
+                LoadState(redoState);
             }
-            DrawAll();
         }
         private void Redo_Click(object sender, RoutedEventArgs e)
         {
