@@ -37,7 +37,7 @@ namespace Paint
         List<UIElement> _elements = new(); //Contain shape and image element.
         List<UIElement> _undoElements = new();
         List<UIElement> _redoElements = new();
-
+        private bool dragStarted = false;
         public MainWindow()
         {
             InitializeComponent();
@@ -361,6 +361,38 @@ namespace Paint
         private void Redo_Click(object sender, RoutedEventArgs e)
         {
             HandleRedo();
+        }
+
+        private void zoom_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void zoomSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (dragStarted)
+            {
+                TransformGroup g = new TransformGroup();
+                g.Children.Add(new ScaleTransform(zoomSlider.Value, zoomSlider.Value));
+                g.Children.Add(new TranslateTransform(0, 0));
+                canvas.LayoutTransform = g;
+            }
+               
+        }
+
+        private void ZoomSlider_OnValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+
+        }
+
+        private void Slider_DragStarted(object sender, System.Windows.Controls.Primitives.DragStartedEventArgs e)
+        {
+            this.dragStarted = true;
+        }
+
+        private void Slider_DragCompleted(object sender, System.Windows.Controls.Primitives.DragCompletedEventArgs e)
+        {
+            this.dragStarted = false;
         }
     }
 }
