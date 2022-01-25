@@ -162,6 +162,19 @@
                                 Width="30" Height="30"/>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
+                    <Fluent:Button 
+                        SizeDefinition="Large" 
+                        ToolTip="Text" 
+                        Header="Text"
+                        Click="SetText">
+                        <Fluent:Button.LargeIcon>
+                            <materialDesign:PackIcon
+                                Kind="FormatColorText"  
+                                HorizontalAlignment="Center" 
+                                VerticalAlignment="Center"
+                                Width="30" Height="30"/>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
                 </Fluent:RibbonGroupBox>
             </Fluent:RibbonTabItem>
         </Fluent:Ribbon>

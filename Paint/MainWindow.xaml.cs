@@ -185,8 +185,14 @@ namespace Paint
                             }
                         }
                         Shape shape = result.VisualHit as Shape;
-                        shape.Fill = new SolidColorBrush((Color)ColorGalleryStandard.SelectedColor);
-                        Debug.WriteLine(shape);
+                        foreach (var item in _elements)
+                        {
+                            if (item.Equals(shape) == true)
+                            {
+                                (item as Shape).Fill = new SolidColorBrush((Color)ColorGalleryStandard.SelectedColor);
+                                DrawAll();
+                            }
+                        }
                     }
                     else if (result.VisualHit is Canvas)
                     {
@@ -194,6 +200,12 @@ namespace Paint
                         canvas.Background = new SolidColorBrush((Color)ColorGalleryStandard.SelectedColor);
                     }
                 }
+            }
+            else if (_selection == "text")
+            {
+                _isDrawing = true;
+                Point position = e.GetPosition(canvas);
+                _elements.Add(new TextBlock());
             }
         }
         private void canvas_MouseMove(object sender, MouseEventArgs e)
@@ -651,8 +663,10 @@ namespace Paint
         {
             if (_selection == "shape")
                 Cursor = Cursors.Cross;
-            else if(_selection == "fill")
+            else if (_selection == "fill")
                 Cursor = new Cursor("format-color-fill.cur");
+            else if (_selection == "text")
+                Cursor = Cursors.IBeam;
         }
         private void ColorGalleryStandard_SelectedColorChanged(object sender, RoutedEventArgs e)
         {
@@ -664,6 +678,12 @@ namespace Paint
                 adoner = new CircleAdorner(canvas.Children[canvas.Children.Count - 1]);
                 AdornerLayer.GetAdornerLayer(canvas.Children[canvas.Children.Count - 1]).Add(adoner);
             }
+        }
+
+        private void SetText(object sender, RoutedEventArgs e)
+        {
+            EndEdit();
+            _selection = "text";
         }
     }
 }
