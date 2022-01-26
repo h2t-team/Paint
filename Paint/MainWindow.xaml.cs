@@ -30,8 +30,10 @@ namespace Paint
     public partial class MainWindow : RibbonWindow
     {
         bool _isDrawing = false;
+        bool _isZooming = false;
         List<IShape> _shapes = new List<IShape>();
         IShape _preview;
+        IShape _zoomRectangle;
         string _selectedShapeName = "";
         Dictionary<string, IShape> _prototypes = new Dictionary<string, IShape>();
         List<UIElement> _elements = new(); //Contain shape and image element.
@@ -47,10 +49,18 @@ namespace Paint
         {
             //clone shape of preview with selected shape
             _preview = _prototypes[_selectedShapeName].Clone();
-            _isDrawing = true;
+            if (!_isZooming) _isDrawing = true;
             //get start positon and save in HandleStart of preview
             Point position = e.GetPosition(canvas);
             _preview.HandleStart(position.X, position.Y);
+            if (_isZooming)
+            {
+                zoomSlider.Value = zoomSlider.Value *2;
+                TransformGroup g = new TransformGroup();
+                g.Children.Add(new ScaleTransform(zoomSlider.Value, zoomSlider.Value, position.X, position.Y));
+                g.Children.Add(new TranslateTransform(0, 0));
+                canvas.RenderTransform = g;
+            }
         }
 
         private void canvas_MouseMove(object sender, MouseEventArgs e)
@@ -70,6 +80,27 @@ namespace Paint
                 }
                 //Draw preview
                 canvas.Children.Add(_preview.Draw());
+            }
+            if (_isZooming)
+            {
+                Point position = e.GetPosition(canvas);
+                ////clone shape of preview with selected shape
+                ////IShape rec = new Rectangle();
+                _zoomRectangle = _prototypes["Rectangle"].Clone();
+
+              
+                ////get current position
+                _zoomRectangle.HandleStart(position.X - 10 * 2, position.Y - 10*2);
+                _zoomRectangle.HandleEnd(position.X + 10/2, position.Y + 10/2);
+                //Clear all drawings
+                canvas.Children.Clear();
+                //Redraw all shapes that was saved before
+                foreach (var element in _elements)
+                {
+                    canvas.Children.Add(element);
+                }
+                //Draw preview
+                canvas.Children.Add(_zoomRectangle.Draw());
             }
         }
 
@@ -171,6 +202,8 @@ namespace Paint
             var Btn = sender as System.Windows.Controls.Button;
             _selectedShapeName = Btn.Tag as string;
             _preview = _prototypes[_selectedShapeName];
+            _isZooming = false;
+            //_isDrawing = true;
         }
 
         private void Export_Click(object sender, RoutedEventArgs e)
@@ -365,7 +398,9 @@ namespace Paint
 
         private void zoom_Click(object sender, RoutedEventArgs e)
         {
-
+            _isDrawing = false;
+            _isZooming = true;
+            
         }
 
         private void zoomSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -375,14 +410,9 @@ namespace Paint
                 TransformGroup g = new TransformGroup();
                 g.Children.Add(new ScaleTransform(zoomSlider.Value, zoomSlider.Value));
                 g.Children.Add(new TranslateTransform(0, 0));
-                canvas.LayoutTransform = g;
+                canvas.RenderTransform = g;
             }
                
-        }
-
-        private void ZoomSlider_OnValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-        {
-
         }
 
         private void Slider_DragStarted(object sender, System.Windows.Controls.Primitives.DragStartedEventArgs e)

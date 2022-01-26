@@ -57,7 +57,7 @@
                 </Fluent:RibbonGroupBox>
                 <Fluent:RibbonGroupBox  Name="ToolGroupBox" MinWidth="60" Padding="10">
                     <Fluent:Button 
-                        
+                    
                         Click="zoom_Click" 
                         SizeDefinition="Small">
                         <Fluent:Button.LargeIcon>
@@ -70,9 +70,12 @@
         <Fluent:StatusBar DockPanel.Dock="Bottom">
             <Fluent:StatusBarItem Title="Zoom Slider"
                                   HorizontalAlignment="Right">
-                <Slider Grid.Row="1" VerticalAlignment="Center" Margin="0,20,0,0" Width="200" x:Name="zoomSlider" ValueChanged="zoomSlider_ValueChanged" Value="1" Minimum="0.05" Maximum="5" IsSnapToTickEnabled="True" LargeChange=".05" TickFrequency="0.05" SmallChange="0.05"
+                <Slider Grid.Row="1" VerticalAlignment="Center" Width="200" 
+                        x:Name="zoomSlider" ValueChanged="zoomSlider_ValueChanged" 
+                        Value="1" Minimum="0.5" Maximum="8" IsSnapToTickEnabled="True" 
+                        LargeChange=".05" TickFrequency="0.05" SmallChange="0.05"
                         Thumb.DragStarted="Slider_DragStarted"
-    Thumb.DragCompleted="Slider_DragCompleted"/>
+                        Thumb.DragCompleted="Slider_DragCompleted"/>
             </Fluent:StatusBarItem>
         </Fluent:StatusBar>
         <Grid>
@@ -94,8 +97,6 @@
                     </Border>
                 </Grid>
             </ScrollViewer>
-
-            <!--<Slider Grid.Row="1" VerticalAlignment="Center" Margin="0,20,0,0" Width="200" x:Name="zoomSlider" ValueChanged="zoomSlider_ValueChanged" Value="1" Minimum="0.05" Maximum="5" IsSnapToTickEnabled="True" LargeChange=".05" TickFrequency="0.05" SmallChange="0.05"/>-->
         </Grid>
         
     </DockPanel>
