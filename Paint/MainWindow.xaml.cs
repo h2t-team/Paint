@@ -31,6 +31,7 @@ namespace Paint
         bool _isEditing = false;
         List<IShape> _shapes = new List<IShape>();
         IShape _preview;
+        UIElement backgroundElement = null;
         string _selectedShapeName = "";
         int _selectedPenWidth = 1;
         string _selectedStrokeType = "";
@@ -38,8 +39,8 @@ namespace Paint
         Dictionary<string, IShape> _prototypes = new Dictionary<string, IShape>();
         Dictionary<string, DoubleCollection> _strokeTypes = new Dictionary<string, DoubleCollection>();
         List<UIElement> _elements = new(); //Contain shape and image element.
-        List<UIElement> _undoElements = new();
-        List<UIElement> _redoElements = new();
+        Stack<State> _undoStates = new();
+        Stack<State> _redoStates = new();
         CircleAdorner adoner;
         private enum HitType
         {
@@ -123,11 +124,11 @@ namespace Paint
         {
             if (_isEditing)
             {
+                _redoStates.Clear();
+                SaveUndoState();
                 _isEditing = false;
                 _isDragging = false;
                 _shapes.Add(_preview);
-                if (_elements.Count > 0)
-                    _undoElements.Add(_elements.Last());
                 _elements.Add(_preview.Draw());
                 DrawAll();
                 MouseHitType = HitType.None;
@@ -139,7 +140,7 @@ namespace Paint
         {
             if (_selection == "shape")
             {
-                if(MouseHitType == HitType.None)
+                if (MouseHitType == HitType.None)
                     EndEdit();
                 if (_isEditing)
                 {
@@ -175,6 +176,8 @@ namespace Paint
                 {
                     if (result.VisualHit is Shape)
                     {
+                        _redoStates.Clear();
+                        SaveUndoState();
                         foreach (var item in _shapes)
                         {
                             MouseHitType = SetHitType(item, pt);
@@ -197,6 +200,8 @@ namespace Paint
                     else if (result.VisualHit is Canvas)
                     {
                         //canvas.Color
+                        _redoStates.Clear();
+                        SaveUndoState();
                         canvas.Background = new SolidColorBrush((Color)ColorGalleryStandard.SelectedColor);
                     }
                 }
@@ -278,8 +283,8 @@ namespace Paint
                         new_start.Y = _preview.GetStart().Y < _preview.GetEnd().Y ? top : bottom;
                         new_end.X = _preview.GetStart().X > _preview.GetEnd().X ? left : right;
                         new_end.Y = _preview.GetStart().Y > _preview.GetEnd().Y ? top : bottom;
-                        _preview.HandleStart(new_start.X,new_start.Y);
-                        _preview.HandleEnd(new_end.X,new_end.Y);
+                        _preview.HandleStart(new_start.X, new_start.Y);
+                        _preview.HandleEnd(new_end.X, new_end.Y);
                         DrawAll();
                         canvas.Children.Add(_preview.Draw());
                         adoner = new CircleAdorner(canvas.Children[canvas.Children.Count - 1]);
@@ -490,6 +495,7 @@ namespace Paint
                         shape.StrokeType = _strokeTypes[split[5]];
                         shape.PenWidth = int.Parse(split[6]);
                         shape.OutlineColor = (Color)ColorConverter.ConvertFromString(split[7]);
+                        shape.FillColor = (Color)ColorConverter.ConvertFromString(split[8]);
                         _shapes.Add(shape);
                         _elements.Add(shape.Draw());
                         DrawAll();
@@ -512,16 +518,16 @@ namespace Paint
                         canvas.Width = wpfImage.Width;
                     if (canvas.Height < wpfImage.Height)
                         canvas.Height = wpfImage.Height;
-                    _elements.Add(wpfImage);
+                    backgroundElement = wpfImage;
                     canvas.Children.Add(wpfImage);
                 }
             }
         }
         private string FindStrokeType(DoubleCollection stroke)
         {
-            foreach(var item in _strokeTypes)
+            foreach (var item in _strokeTypes)
             {
-                if(item.Value.SequenceEqual(stroke))
+                if (item.Value.SequenceEqual(stroke))
                 {
                     return item.Key;
                 }
@@ -539,10 +545,10 @@ namespace Paint
                 string textout = "PaintSaveFile" + Environment.NewLine;
                 foreach (var item in _shapes)
                 {
-                    //Name startX startY endX endY stroketype width color
+                    //Name startX startY endX endY stroketype width strokecolor fillcolor
                     textout += $"{item.Name} {item.GetStart().X} {item.GetStart().Y} " +
                         $"{item.GetEnd().X} {item.GetEnd().Y} {FindStrokeType(item.StrokeType)} " +
-                        $"{item.PenWidth} {item.OutlineColor.ToString()}" + Environment.NewLine;
+                        $"{item.PenWidth} {item.OutlineColor.ToString()} {item.FillColor.ToString()}" + Environment.NewLine;
                 }
                 File.WriteAllText(dialog.FileName, textout);
             }
@@ -554,27 +560,7 @@ namespace Paint
             _preview = _prototypes["Line"].Clone();
         }
         private void Paint_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.V && Keyboard.IsKeyDown(Key.LeftCtrl))
-            {
-                if (Clipboard.ContainsImage())
-                {
-                    var clipboardImage = Clipboard.GetImage();
-                    Image image = new Image
-                    {
-                        Source = clipboardImage,
-                        Height = clipboardImage.Height,
-                        Width = clipboardImage.Width,
-                    };
-
-                    if (canvas.Width < image.Width)
-                        canvas.Width = image.Width;
-                    if (canvas.Height < image.Height)
-                        canvas.Height = image.Height;
-                    _elements.Add(image);
-                    canvas.Children.Add(image);
-                }
-            }
+        {            
             if (e.Key == Key.Z && Keyboard.IsKeyDown(Key.LeftCtrl))
             {
                 HandleUndo();
@@ -588,20 +574,41 @@ namespace Paint
         private void DrawAll()
         {
             canvas.Children.Clear();
+            if (backgroundElement != null)
+                canvas.Children.Add(backgroundElement);
             foreach (var element in _elements)
                 canvas.Children.Add(element);
+        }
+        private void SaveUndoState()
+        {
+            State state = new(_shapes, canvas.Background.ToString());
+            if (_undoStates.Count == 0 || !_undoStates.Peek().Equals(state))
+            {
+                _undoStates.Push(state);
+            }
+        }
+        private void LoadState(State state)
+        {
+            _elements.Clear();
+            _shapes.Clear();
+            _shapes = new(state.Shapes);
+            foreach (var item in _shapes)
+            {
+                _elements.Add(item.Draw());
+            }
+            canvas.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(state.Background));
+            DrawAll();
         }
         private void HandleUndo()
         {
             EndEdit();
-            if (_elements.Count() != 0)
+            if (_undoStates.Count != 0)
             {
-                _redoElements.Add(_elements.Last());
-                _elements.RemoveAt(_elements.Count() - 1);
+                State redoState = new State(_shapes, canvas.Background.ToString());
+                _redoStates.Push(redoState);
+                State undoState = _undoStates.Pop();
+                LoadState(undoState);
             }
-            if (_undoElements.Count() != 0)
-                _undoElements.RemoveAt(_undoElements.Count() - 1);
-            DrawAll();
         }
         private void Undo_Click(object sender, RoutedEventArgs e)
         {
@@ -610,14 +617,13 @@ namespace Paint
         private void HandleRedo()
         {
             EndEdit();
-            if (_redoElements.Count() != 0)
+            if (_redoStates.Count != 0)
             {
-                if (_elements.Count() != 0)
-                    _undoElements.Add(_elements.Last());
-                _elements.Add(_redoElements.Last());
-                _redoElements.RemoveAt(_redoElements.Count() - 1);
+                State undoState = new State(_shapes, canvas.Background.ToString());
+                _undoStates.Push(undoState);
+                State redoState = _redoStates.Pop();
+                LoadState(redoState);
             }
-            DrawAll();
         }
         private void Redo_Click(object sender, RoutedEventArgs e)
         {
@@ -641,7 +647,7 @@ namespace Paint
         {
             var Btn = sender as Button;
             _selectedStrokeType = (string)Btn.Tag;
-            if (_isEditing) 
+            if (_isEditing)
             {
                 _preview.StrokeType = _strokeTypes[_selectedStrokeType];
                 DrawAll();
