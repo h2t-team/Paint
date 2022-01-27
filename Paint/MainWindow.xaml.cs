@@ -190,7 +190,6 @@ namespace Paint
                             if (item.Equals(shape) == true)
                             {
                                 (item as Shape).Fill = new SolidColorBrush((Color)ColorGalleryStandard.SelectedColor);
-                                DrawAll();
                             }
                         }
                     }
