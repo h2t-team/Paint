@@ -18,6 +18,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Contract\Contract.csproj" />
     <ProjectReference Include="..\Line2D\Line2D.csproj" />
+    <ProjectReference Include="..\Text2D\Text2D.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,23 +1,23 @@
 ﻿using Contract;
 using Fluent;
+using MaterialDesignThemes.Wpf;
 using Microsoft.Win32;
+using Paint.DataType;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using Button = Fluent.Button;
-using MaterialDesignThemes.Wpf;
-using System.ComponentModel;
-using System.Diagnostics;
-using Paint.DataType;
-using System.Windows.Documents;
 using System.Windows.Shapes;
+using Button = Fluent.Button;
 
 namespace Paint
 {
@@ -165,6 +165,10 @@ namespace Paint
                     _preview.PenWidth = _selectedPenWidth;
                     _preview.StrokeType = _strokeTypes[_selectedStrokeType];
                     _preview.FillColor = Colors.Transparent;
+                    if (_preview.Name == "Text")
+                    {
+                        _preview.PenWidth = 1;
+                    }
                 }
             }
             else if (_selection == "fill")
@@ -204,12 +208,6 @@ namespace Paint
                         canvas.Background = new SolidColorBrush((Color)ColorGalleryStandard.SelectedColor);
                     }
                 }
-            }
-            else if (_selection == "text")
-            {
-                _isDrawing = true;
-                Point position = e.GetPosition(canvas);
-                _elements.Add(new TextBlock());
             }
         }
         private void canvas_MouseMove(object sender, MouseEventArgs e)
@@ -393,6 +391,10 @@ namespace Paint
             IShape lineShape = new Line2D.Line2D();
             _prototypes.Add(lineShape.Name, lineShape);
 
+            // add the text
+            IShape textShape = new Text2D.Text2D();
+            _prototypes.Add(textShape.Name, textShape);
+
             // default selection
             _selectedShapeName = lineShape.Name;
             _preview = _prototypes[_selectedShapeName].Clone();
@@ -563,12 +565,25 @@ namespace Paint
             if (e.Key == Key.Z && Keyboard.IsKeyDown(Key.LeftCtrl))
             {
                 HandleUndo();
+                return;
             }
             if (e.Key == Key.Y && Keyboard.IsKeyDown(Key.LeftCtrl))
             {
                 HandleRedo();
+                return;
             }
-
+            if (_isEditing == true && _preview.Name == "Text")
+            {
+                if (e.Key == Key.Back)
+                {
+                    (_preview as Text2D.Text2D).Text = (_preview as Text2D.Text2D).Text.Remove((_preview as Text2D.Text2D).Text.Length - 1, 1);
+                    return;
+                }
+                (_preview as Text2D.Text2D).Text += e.Key;
+                DrawAll();
+                canvas.Children.Add((_preview as Text2D.Text2D).Draw());
+                return;
+            }
         }
         private void DrawAll()
         {
@@ -688,7 +703,7 @@ namespace Paint
         private void SetText(object sender, RoutedEventArgs e)
         {
             EndEdit();
-            _selection = "text";
+            _selectedShapeName = "Text";
         }
     }
 }
