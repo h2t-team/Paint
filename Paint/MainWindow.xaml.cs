@@ -6,21 +6,18 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using Button = Fluent.Button;
 using MaterialDesignThemes.Wpf;
+using System.ComponentModel;
 using System.Diagnostics;
+using Paint.DataType;
+using System.Windows.Documents;
+using System.Windows.Shapes;
 
 namespace Paint
 {
@@ -30,23 +27,194 @@ namespace Paint
     public partial class MainWindow : RibbonWindow
     {
         bool _isDrawing = false;
+        bool _isDragging = false;
+        bool _isEditing = false;
         bool _isZooming = false;
         List<IShape> _shapes = new List<IShape>();
         IShape _preview;
+        UIElement backgroundElement = null;
         IShape _zoomRectangle;
         string _selectedShapeName = "";
+        int _selectedPenWidth = 1;
+        string _selectedStrokeType = "";
+        string _selection = "shape";
         Dictionary<string, IShape> _prototypes = new Dictionary<string, IShape>();
+        Dictionary<string, DoubleCollection> _strokeTypes = new Dictionary<string, DoubleCollection>();
         List<UIElement> _elements = new(); //Contain shape and image element.
-        List<UIElement> _undoElements = new();
-        List<UIElement> _redoElements = new();
-        private bool dragStarted = false;
+        Stack<State> _undoStates = new();
+        Stack<State> _redoStates = new();
+        CircleAdorner adoner;
+        private enum HitType
+        {
+            None, Body, UL, UR, LR, LL, T, B, L, R
+        };
+        HitType MouseHitType = HitType.None;
+        // The drag's last point.
+        private Point LastPoint;
+        private void GetLRTB(IShape shape, out double left, out double right, out double top, out double bottom)
+        {
+            left = shape.GetStart().X < shape.GetEnd().X ? shape.GetStart().X : shape.GetEnd().X;
+            top = shape.GetStart().Y < shape.GetEnd().Y ? shape.GetStart().Y : shape.GetEnd().Y;
+            right = shape.GetStart().X > shape.GetEnd().X ? shape.GetStart().X : shape.GetEnd().X;
+            bottom = shape.GetStart().Y > shape.GetEnd().Y ? shape.GetStart().Y : shape.GetEnd().Y;
+        }
+        private HitType SetHitType(IShape shape, Point point)
+        {
+            double left, top, right, bottom;
+            GetLRTB(shape, out left, out right, out top, out bottom);
+            const double GAP = 10;
+            if (point.X < left - GAP) return HitType.None;
+            if (point.X > right + GAP) return HitType.None;
+            if (point.Y < top - GAP) return HitType.None;
+            if (point.Y > bottom + GAP) return HitType.None;
+
+            if (Math.Abs(point.X - left) < GAP)
+            {
+                // Left edge.
+                if (Math.Abs(point.Y - top) < GAP) return HitType.UL;
+                if (Math.Abs(bottom - point.Y) < GAP) return HitType.LL;
+                return HitType.L;
+            }
+            else if (Math.Abs(right - point.X) < GAP)
+            {
+                // Right edge.
+                if (Math.Abs(point.Y - top) < GAP) return HitType.UR;
+                if (Math.Abs(bottom - point.Y) < GAP) return HitType.LR;
+                return HitType.R;
+            }
+            if (point.Y - top < GAP) return HitType.T;
+            if (bottom - point.Y < GAP) return HitType.B;
+            return HitType.Body;
+        }
+        private void SetMouseCursor()
+        {
+            // See what cursor we should display.
+            Cursor desired_cursor = Cursors.Cross;
+            switch (MouseHitType)
+            {
+                case HitType.None:
+                    desired_cursor = Cursors.Cross;
+                    break;
+                case HitType.Body:
+                    desired_cursor = Cursors.SizeAll;
+                    break;
+                case HitType.UL:
+                case HitType.LR:
+                    desired_cursor = Cursors.SizeNWSE;
+                    break;
+                case HitType.LL:
+                case HitType.UR:
+                    desired_cursor = Cursors.SizeNESW;
+                    break;
+                case HitType.T:
+                case HitType.B:
+                    desired_cursor = Cursors.SizeNS;
+                    break;
+                case HitType.L:
+                case HitType.R:
+                    desired_cursor = Cursors.SizeWE;
+                    break;
+            }
+            // Display the desired cursor.
+            if (Cursor != desired_cursor) Cursor = desired_cursor;
+        }
         public MainWindow()
         {
             InitializeComponent();
         }
-
+        private void EndEdit()
+        {
+            if (_isEditing)
+            {
+                _redoStates.Clear();
+                SaveUndoState();
+                _isEditing = false;
+                _isDragging = false;
+                _shapes.Add(_preview);
+                _elements.Add(_preview.Draw());
+                DrawAll();
+                MouseHitType = HitType.None;
+                SetMouseCursor();
+                return;
+            }
+        }
         private void canvas_MouseDown(object sender, MouseButtonEventArgs e)
         {
+            if (_selection == "shape")
+            {
+                if (MouseHitType == HitType.None)
+                    EndEdit();
+                if (_isEditing)
+                {
+                    if (!_isDragging)
+                    {
+                        MouseHitType = SetHitType(_preview, Mouse.GetPosition(CanvasArea));
+                        SetMouseCursor();
+                        if (MouseHitType == HitType.None) return;
+                        LastPoint = Mouse.GetPosition(CanvasArea);
+                        _isDragging = true;
+                    }
+                }
+                else
+                {
+                    //clone shape of preview with selected shape
+                    _preview = _prototypes[_selectedShapeName].Clone();
+                    _isDrawing = true;
+                    //get start positon and save in HandleStart of preview
+                    Point position = e.GetPosition(canvas);
+                    _preview.HandleStart(position.X, position.Y);
+                    _preview.OutlineColor = (Color)ColorGalleryStandard.SelectedColor;
+                    _preview.PenWidth = _selectedPenWidth;
+                    _preview.StrokeType = _strokeTypes[_selectedStrokeType];
+                    _preview.FillColor = Colors.Transparent;
+                }
+            }
+            else if (_selection == "fill")
+            {
+                IShape cur = null;
+                Point pt = e.GetPosition(canvas);
+                HitTestResult result = VisualTreeHelper.HitTest(canvas, pt);
+                if (result != null)
+                {
+                    if (result.VisualHit is Shape)
+                    {
+                        _redoStates.Clear();
+                        SaveUndoState();
+                        foreach (var item in _shapes)
+                        {
+                            MouseHitType = SetHitType(item, pt);
+                            if (MouseHitType != HitType.None)
+                            {
+                                cur = item;
+                                cur.FillColor = (Color)ColorGalleryStandard.SelectedColor;
+                            }
+                        }
+                        Shape shape = result.VisualHit as Shape;
+                        foreach (var item in _elements)
+                        {
+                            if (item.Equals(shape) == true)
+                            {
+                                (item as Shape).Fill = new SolidColorBrush((Color)ColorGalleryStandard.SelectedColor);
+                                DrawAll();
+                            }
+                        }
+                    }
+                    else if (result.VisualHit is Canvas)
+                    {
+                        //canvas.Color
+                        _redoStates.Clear();
+                        SaveUndoState();
+                        canvas.Background = new SolidColorBrush((Color)ColorGalleryStandard.SelectedColor);
+                    }
+                }
+            }
+            else if (_selection == "text")
+            {
+                _isDrawing = true;
+                Point position = e.GetPosition(canvas);
+                _elements.Add(new TextBlock());
+            }
+        }
             //clone shape of preview with selected shape
             _preview = _prototypes[_selectedShapeName].Clone();
             if (!_isZooming) _isDrawing = true;
@@ -71,15 +239,83 @@ namespace Paint
                 Point position = e.GetPosition(canvas);
                 //get current position
                 _preview.HandleEnd(position.X, position.Y);
-                //Clear all drawings
-                canvas.Children.Clear();
-                //Redraw all shapes that was saved before
-                foreach(var element in _elements)
-                {
-                    canvas.Children.Add(element);
-                }
+                DrawAll();
                 //Draw preview
                 canvas.Children.Add(_preview.Draw());
+            }
+            else if (_isEditing)
+            {
+                if (_isDragging)
+                {
+                    // See how much the mouse has moved.
+                    Point point = Mouse.GetPosition(CanvasArea);
+                    double offset_x = point.X - LastPoint.X;
+                    double offset_y = point.Y - LastPoint.Y;
+
+                    // Get the shape's current position.
+                    double left, top, right, bottom;
+                    GetLRTB(_preview, out left, out right, out top, out bottom);
+                    Point2D new_start = new Point2D();
+                    Point2D new_end = new Point2D();
+                    // Update the shape.
+                    switch (MouseHitType)
+                    {
+                        case HitType.Body:
+                            left += offset_x;
+                            right += offset_x;
+                            top += offset_y;
+                            bottom += offset_y;
+                            break;
+                        case HitType.UL:
+                            left += offset_x;
+                            top += offset_y;
+                            break;
+                        case HitType.UR:
+                            top += offset_y;
+                            right += offset_x;
+                            break;
+                        case HitType.LR:
+                            bottom += offset_y;
+                            right += offset_x;
+                            break;
+                        case HitType.LL:
+                            bottom += offset_y;
+                            left += offset_x;
+                            break;
+                        case HitType.L:
+                            left += offset_x;
+                            break;
+                        case HitType.R:
+                            right += offset_x;
+                            break;
+                        case HitType.B:
+                            bottom += offset_y;
+                            break;
+                        case HitType.T:
+                            top += offset_y;
+                            break;
+                    }
+                    if (left < right && top < bottom)
+                    {
+                        new_start.X = _preview.GetStart().X < _preview.GetEnd().X ? left : right;
+                        new_start.Y = _preview.GetStart().Y < _preview.GetEnd().Y ? top : bottom;
+                        new_end.X = _preview.GetStart().X > _preview.GetEnd().X ? left : right;
+                        new_end.Y = _preview.GetStart().Y > _preview.GetEnd().Y ? top : bottom;
+                        _preview.HandleStart(new_start.X, new_start.Y);
+                        _preview.HandleEnd(new_end.X, new_end.Y);
+                        DrawAll();
+                        canvas.Children.Add(_preview.Draw());
+                        adoner = new CircleAdorner(canvas.Children[canvas.Children.Count - 1]);
+                        AdornerLayer.GetAdornerLayer(canvas.Children[canvas.Children.Count - 1]).Add(new CircleAdorner(canvas.Children[canvas.Children.Count - 1]));
+                        // Save the mouse's new location.
+                        LastPoint = point;
+                    }
+                }
+                else
+                {
+                    MouseHitType = SetHitType(_preview, Mouse.GetPosition(CanvasArea));
+                    SetMouseCursor();
+                }
             }
             if (_isZooming)
             {
@@ -103,7 +339,6 @@ namespace Paint
                 canvas.Children.Add(_zoomRectangle.Draw());
             }
         }
-
         private void canvas_MouseUp(object sender, MouseButtonEventArgs e)
         {
             if (_isDrawing == true)
@@ -112,11 +347,15 @@ namespace Paint
                 //get end position and save in HandleEnd of preview
                 Point postion = e.GetPosition(canvas);
                 _preview.HandleEnd(postion.X, postion.Y);
-                //add preview to shapes
-                _shapes.Add(_preview);
-                if(_elements.Count() != 0)
-                    _undoElements.Add(_elements.Last());
-                _elements.Add(_preview.Draw());
+                if (_preview.GetStart().X == _preview.GetEnd().X && _preview.GetStart().Y == _preview.GetEnd().Y)
+                    return;
+                _isEditing = true;
+                adoner = new CircleAdorner(canvas.Children[canvas.Children.Count - 1]);
+                AdornerLayer.GetAdornerLayer(canvas.Children[canvas.Children.Count - 1]).Add(adoner);
+            }
+            if (_isDragging)
+            {
+                _isDragging = false;
             }
         }
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -151,7 +390,8 @@ namespace Paint
 
                 Button button = new()
                 {
-                    Tag = shape.Name
+                    Tag = shape.Name,
+                    ToolTip = shape.Name
                 };
                 button.SizeDefinition = "Small";
                 PackIcon icon = new();
@@ -196,25 +436,45 @@ namespace Paint
             // default selection
             _selectedShapeName = lineShape.Name;
             _preview = _prototypes[_selectedShapeName].Clone();
+            _selection = "shape";
+
+            //add the stroke types
+            _strokeTypes.Add("Solid", new DoubleCollection(new List<double>() { 1, 0 }));
+            _strokeTypes.Add("Dash", new DoubleCollection(new List<double>() { 4, 4 }));
+            _strokeTypes.Add("Dot", new DoubleCollection(new List<double>() { 1, 2 }));
+            _strokeTypes.Add("Dash Dot", new DoubleCollection(new List<double>() { 4, 4, 1, 4 }));
+
+            foreach (var item in _strokeTypes)
+            {
+                var Btn = new Button();
+                Btn.Header = item.Key;
+                Btn.Tag = item.Key;
+                Btn.Click += SetStrokeType;
+                StrokeCombobox.Items.Add(Btn);
+            }
+
+            _selectedStrokeType = _strokeTypes.First().Key;
         }
         private void prototypeButton_Click(object sender, RoutedEventArgs e)
         {
+            EndEdit();
             var Btn = sender as System.Windows.Controls.Button;
             _selectedShapeName = Btn.Tag as string;
             _preview = _prototypes[_selectedShapeName];
+            _selection = "shape";
             _isZooming = false;
             //_isDrawing = true;
         }
-
         private void Export_Click(object sender, RoutedEventArgs e)
         {
+            EndEdit();
             SaveFileDialog dialog = new SaveFileDialog();
             dialog.Title = "Export";
             dialog.Filter = "PNG (*.png)|*.png|JPG (*.jpg)|*.jpg";
             if (dialog.ShowDialog() == true)
             {
                 RenderTargetBitmap rtb = new RenderTargetBitmap((int)canvas.RenderSize.Width,
-               (int)canvas.RenderSize.Height, 96d, 96d, System.Windows.Media.PixelFormats.Default);
+                (int)canvas.RenderSize.Height, 96d, 96d, System.Windows.Media.PixelFormats.Default);
                 rtb.Render(canvas);
                 //check file extension
                 if (System.IO.Path.GetExtension(dialog.FileName) == ".png")
@@ -240,10 +500,10 @@ namespace Paint
         private BitmapImage ConvertToBitmap(System.Drawing.Image img, string ext)
         {
             MemoryStream ms = new MemoryStream();
-            if(ext == ".png")
+            if (ext == ".png")
                 img.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
-            if(ext ==".jpg")
-                img.Save(ms, System.Drawing.Imaging.ImageFormat.Jpeg);               
+            if (ext == ".jpg")
+                img.Save(ms, System.Drawing.Imaging.ImageFormat.Jpeg);
 
             BitmapImage ix = new BitmapImage();
             ix.BeginInit();
@@ -266,7 +526,6 @@ namespace Paint
                         return;
                     _shapes.Clear();
                     _elements.Clear();
-                    canvas.Children.Clear();
                     IShape shape;
                     for (int i = 1; i < lines.Length; i++)
                     {
@@ -274,9 +533,13 @@ namespace Paint
                         shape = _prototypes[split[0]].Clone();
                         shape.HandleStart(Double.Parse(split[1]), Double.Parse(split[2]));
                         shape.HandleEnd(Double.Parse(split[3]), Double.Parse(split[4]));
+                        shape.StrokeType = _strokeTypes[split[5]];
+                        shape.PenWidth = int.Parse(split[6]);
+                        shape.OutlineColor = (Color)ColorConverter.ConvertFromString(split[7]);
+                        shape.FillColor = (Color)ColorConverter.ConvertFromString(split[8]);
                         _shapes.Add(shape);
                         _elements.Add(shape.Draw());
-                        canvas.Children.Add(shape.Draw());
+                        DrawAll();
                     }
                 }
                 else
@@ -296,14 +559,25 @@ namespace Paint
                         canvas.Width = wpfImage.Width;
                     if (canvas.Height < wpfImage.Height)
                         canvas.Height = wpfImage.Height;
-                    _elements.Add(wpfImage);
+                    backgroundElement = wpfImage;
                     canvas.Children.Add(wpfImage);
                 }
             }
         }
-
+        private string FindStrokeType(DoubleCollection stroke)
+        {
+            foreach (var item in _strokeTypes)
+            {
+                if (item.Value.SequenceEqual(stroke))
+                {
+                    return item.Key;
+                }
+            }
+            return "";
+        }
         private void Save_Click(object sender, RoutedEventArgs e)
         {
+            EndEdit();
             SaveFileDialog dialog = new SaveFileDialog();
             dialog.Title = "Save";
             dialog.Filter = "Binary File (*.bin)|*.bin";
@@ -312,43 +586,22 @@ namespace Paint
                 string textout = "PaintSaveFile" + Environment.NewLine;
                 foreach (var item in _shapes)
                 {
-                    //Name startX startY endX endY
+                    //Name startX startY endX endY stroketype width strokecolor fillcolor
                     textout += $"{item.Name} {item.GetStart().X} {item.GetStart().Y} " +
-                        $"{item.GetEnd().X} {item.GetEnd().Y}" + Environment.NewLine;
+                        $"{item.GetEnd().X} {item.GetEnd().Y} {FindStrokeType(item.StrokeType)} " +
+                        $"{item.PenWidth} {item.OutlineColor.ToString()} {item.FillColor.ToString()}" + Environment.NewLine;
                 }
                 File.WriteAllText(dialog.FileName, textout);
             }
         }
-
         private void New_Click(object sender, RoutedEventArgs e)
         {
             canvas.Children.Clear();
             _shapes.Clear();
             _preview = _prototypes["Line"].Clone();
         }
-
         private void Paint_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.V && Keyboard.IsKeyDown(Key.LeftCtrl))
-            {
-                if (Clipboard.ContainsImage())
-                {
-                    var clipboardImage = Clipboard.GetImage();
-                    Image image = new Image
-                    {
-                        Source = clipboardImage,
-                        Height = clipboardImage.Height,
-                        Width = clipboardImage.Width,
-                    };
-
-                    if (canvas.Width < image.Width)
-                        canvas.Width = image.Width;
-                    if (canvas.Height < image.Height)
-                        canvas.Height = image.Height;
-                    _elements.Add(image);
-                    canvas.Children.Add(image);
-                }
-            }
+        {            
             if (e.Key == Key.Z && Keyboard.IsKeyDown(Key.LeftCtrl))
             {
                 HandleUndo();
@@ -360,21 +613,43 @@ namespace Paint
 
         }
         private void DrawAll()
-        {            
+        {
             canvas.Children.Clear();
+            if (backgroundElement != null)
+                canvas.Children.Add(backgroundElement);
             foreach (var element in _elements)
                 canvas.Children.Add(element);
         }
+        private void SaveUndoState()
+        {
+            State state = new(_shapes, canvas.Background.ToString());
+            if (_undoStates.Count == 0 || !_undoStates.Peek().Equals(state))
+            {
+                _undoStates.Push(state);
+            }
+        }
+        private void LoadState(State state)
+        {
+            _elements.Clear();
+            _shapes.Clear();
+            _shapes = new(state.Shapes);
+            foreach (var item in _shapes)
+            {
+                _elements.Add(item.Draw());
+            }
+            canvas.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(state.Background));
+            DrawAll();
+        }
         private void HandleUndo()
         {
-            if (_elements.Count() != 0)
+            EndEdit();
+            if (_undoStates.Count != 0)
             {
-                _redoElements.Add(_elements.Last());
-                _elements.RemoveAt(_elements.Count() - 1);
+                State redoState = new State(_shapes, canvas.Background.ToString());
+                _redoStates.Push(redoState);
+                State undoState = _undoStates.Pop();
+                LoadState(undoState);
             }
-            if (_undoElements.Count() != 0)
-                _undoElements.RemoveAt(_undoElements.Count() - 1);
-            DrawAll();
         }
         private void Undo_Click(object sender, RoutedEventArgs e)
         {
@@ -382,18 +657,80 @@ namespace Paint
         }
         private void HandleRedo()
         {
-            if (_redoElements.Count() != 0)
+            EndEdit();
+            if (_redoStates.Count != 0)
             {
-                if (_elements.Count() != 0)
-                    _undoElements.Add(_elements.Last());
-                _elements.Add(_redoElements.Last());
-                _redoElements.RemoveAt(_redoElements.Count() - 1);
+                State undoState = new State(_shapes, canvas.Background.ToString());
+                _undoStates.Push(undoState);
+                State redoState = _redoStates.Pop();
+                LoadState(redoState);
             }
-            DrawAll();
         }
         private void Redo_Click(object sender, RoutedEventArgs e)
         {
             HandleRedo();
+        }
+        private void SetPenWidth(object sender, RoutedEventArgs e)
+        {
+            WidthCombobox.IsDropDownOpen = false;
+            var Btn = sender as System.Windows.Controls.Button;
+            _selectedPenWidth = int.Parse((string)Btn.Tag);
+            if (_isEditing)
+            {
+                _preview.PenWidth = _selectedPenWidth;
+                DrawAll();
+                canvas.Children.Add(_preview.Draw());
+                adoner = new CircleAdorner(canvas.Children[canvas.Children.Count - 1]);
+                AdornerLayer.GetAdornerLayer(canvas.Children[canvas.Children.Count - 1]).Add(adoner);
+            }
+        }
+        private void SetStrokeType(object sender, RoutedEventArgs e)
+        {
+            var Btn = sender as Button;
+            _selectedStrokeType = (string)Btn.Tag;
+            if (_isEditing)
+            {
+                _preview.StrokeType = _strokeTypes[_selectedStrokeType];
+                DrawAll();
+                canvas.Children.Add(_preview.Draw());
+                adoner = new CircleAdorner(canvas.Children[canvas.Children.Count - 1]);
+                AdornerLayer.GetAdornerLayer(canvas.Children[canvas.Children.Count - 1]).Add(adoner);
+            }
+        }
+        private void SetFill(object sender, RoutedEventArgs e)
+        {
+            EndEdit();
+            _selection = "fill";
+        }
+        private void canvas_MouseLeave(object sender, MouseEventArgs e)
+        {
+            Cursor = Cursors.Arrow;
+        }
+        private void canvas_MouseEnter(object sender, MouseEventArgs e)
+        {
+            if (_selection == "shape")
+                Cursor = Cursors.Cross;
+            else if (_selection == "fill")
+                Cursor = new Cursor("format-color-fill.cur");
+            else if (_selection == "text")
+                Cursor = Cursors.IBeam;
+        }
+        private void ColorGalleryStandard_SelectedColorChanged(object sender, RoutedEventArgs e)
+        {
+            if (_isEditing)
+            {
+                _preview.OutlineColor = (Color)ColorGalleryStandard.SelectedColor;
+                DrawAll();
+                canvas.Children.Add(_preview.Draw());
+                adoner = new CircleAdorner(canvas.Children[canvas.Children.Count - 1]);
+                AdornerLayer.GetAdornerLayer(canvas.Children[canvas.Children.Count - 1]).Add(adoner);
+            }
+        }
+
+        private void SetText(object sender, RoutedEventArgs e)
+        {
+            EndEdit();
+            _selection = "text";
         }
 
         private void zoom_Click(object sender, RoutedEventArgs e)
