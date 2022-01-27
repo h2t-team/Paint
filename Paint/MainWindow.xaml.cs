@@ -52,6 +52,7 @@ namespace Paint
         HitType MouseHitType = HitType.None;
         // The drag's last point.
         private Point LastPoint;
+
         private void GetLRTB(IShape shape, out double left, out double right, out double top, out double bottom)
         {
             left = shape.GetStart().X < shape.GetEnd().X ? shape.GetStart().X : shape.GetEnd().X;
@@ -797,6 +798,7 @@ namespace Paint
                 g.Children.Add(new ScaleTransform(zoomSlider.Value, zoomSlider.Value));
                 g.Children.Add(new TranslateTransform(0,0));
                 canvas.LayoutTransform = g;
+                zoomValue.Text = (zoomSlider.Value*100).ToString()+"%";
             }
 
         }

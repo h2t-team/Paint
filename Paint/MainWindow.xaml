@@ -189,12 +189,17 @@
             </Fluent:RibbonTabItem>
         </Fluent:Ribbon>
         <Fluent:StatusBar DockPanel.Dock="Bottom">
+            <Fluent:StatusBarItem Title="Zoom Slider Value"
+                                  HorizontalAlignment="Right">
+                <TextBlock x:Name="zoomValue" Text="100%"></TextBlock>
+            </Fluent:StatusBarItem>
             <Fluent:StatusBarItem Title="Zoom Slider"
                                   HorizontalAlignment="Right">
-                <Slider Grid.Row="1" VerticalAlignment="Center" Width="200" 
+                <Slider VerticalAlignment="Center" Width="200"
+                        Margin="0,0,10,0"
                         x:Name="zoomSlider" ValueChanged="zoomSlider_ValueChanged" 
-                        Value="1" Minimum="0.5" Maximum="8" IsSnapToTickEnabled="True" 
-                        LargeChange=".05" TickFrequency="0.05" SmallChange="0.05"
+                        Value="1" Minimum="0.25" Maximum="8" IsSnapToTickEnabled="True" 
+                        LargeChange="1" TickFrequency="0.25" SmallChange="0.5"
                         Thumb.DragStarted="Slider_DragStarted"
                         Thumb.DragCompleted="Slider_DragCompleted"/>
             </Fluent:StatusBarItem>
@@ -204,9 +209,7 @@
                 <Grid>
                     <Canvas x:Name="canvas" Background="White" Height="460" Width="900">
                         <Canvas.LayoutTransform>
-                            
-                                <ScaleTransform x:Name="scaleTransform" ScaleX="{Binding ElementName=zoomSlider, Path=Value}" ScaleY="{Binding ElementName=zoomSlider, Path=Value}" CenterX="0" CenterY="0"/>
-                            
+                            <ScaleTransform x:Name="scaleTransform" ScaleX="{Binding ElementName=zoomSlider, Path=Value}" ScaleY="{Binding ElementName=zoomSlider, Path=Value}" CenterX="0" CenterY="0"/>
                         </Canvas.LayoutTransform>
                     </Canvas>
                     <Border 
