@@ -176,12 +176,41 @@
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
+                <!--<Fluent:RibbonGroupBox  Name="ToolGroupBox" MinWidth="60" Padding="10">
+                    <Fluent:Button 
+                    
+                        Click="zoom_Click" 
+                        SizeDefinition="Small">
+                        <Fluent:Button.LargeIcon>
+                            <materialDesign:PackIcon Kind="magnifyPlusOutline"/>
+                        </Fluent:Button.LargeIcon>
+                    </Fluent:Button>
+                </Fluent:RibbonGroupBox>-->
             </Fluent:RibbonTabItem>
         </Fluent:Ribbon>
+        <Fluent:StatusBar DockPanel.Dock="Bottom">
+            <Fluent:StatusBarItem Title="Zoom Slider Value"
+                                  HorizontalAlignment="Right">
+                <TextBlock x:Name="zoomValue" Text="100%"></TextBlock>
+            </Fluent:StatusBarItem>
+            <Fluent:StatusBarItem Title="Zoom Slider"
+                                  HorizontalAlignment="Right">
+                <Slider VerticalAlignment="Center" Width="200"
+                        Margin="0,0,10,0"
+                        x:Name="zoomSlider" ValueChanged="zoomSlider_ValueChanged" 
+                        Value="1" Minimum="0.25" Maximum="8" IsSnapToTickEnabled="True" 
+                        LargeChange="1" TickFrequency="0.25" SmallChange="0.5"
+                        Thumb.DragStarted="Slider_DragStarted"
+                        Thumb.DragCompleted="Slider_DragCompleted"/>
+            </Fluent:StatusBarItem>
+        </Fluent:StatusBar>
         <Grid>
-            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+            <ScrollViewer x:Name="scrollViewer" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Visible" ScrollChanged="scrollViewer_ScrollChanged">
                 <Grid>
                     <Canvas x:Name="canvas" Background="White" Height="460" Width="900">
+                        <Canvas.LayoutTransform>
+                            <ScaleTransform x:Name="scaleTransform" ScaleX="{Binding ElementName=zoomSlider, Path=Value}" ScaleY="{Binding ElementName=zoomSlider, Path=Value}" CenterX="0" CenterY="0"/>
+                        </Canvas.LayoutTransform>
                     </Canvas>
                     <Border 
                         Background="Transparent" 
@@ -195,5 +224,6 @@
                 </Grid>
             </ScrollViewer>
         </Grid>
+        
     </DockPanel>
 </Fluent:RibbonWindow>

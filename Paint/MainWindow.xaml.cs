@@ -29,8 +29,11 @@ namespace Paint
         bool _isDrawing = false;
         bool _isDragging = false;
         bool _isEditing = false;
+        bool _isZooming = false;
+        bool dragStarted = false;
         List<IShape> _shapes = new List<IShape>();
         IShape _preview;
+        IShape _zoomRectangle;
         UIElement backgroundElement = null;
         string _selectedShapeName = "";
         int _selectedPenWidth = 1;
@@ -49,6 +52,7 @@ namespace Paint
         HitType MouseHitType = HitType.None;
         // The drag's last point.
         private Point LastPoint;
+
         private void GetLRTB(IShape shape, out double left, out double right, out double top, out double bottom)
         {
             left = shape.GetStart().X < shape.GetEnd().X ? shape.GetStart().X : shape.GetEnd().X;
@@ -212,7 +216,53 @@ namespace Paint
                 Point position = e.GetPosition(canvas);
                 _elements.Add(new TextBlock());
             }
+            else if (_selection=="zoom")
+            {
+                Point position = e.GetPosition(canvas);
+                Console.WriteLine("abc");
+                zoomSlider.Value = zoomSlider.Value * 2;
+                TransformGroup g = new TransformGroup();
+                g.Children.Add(new ScaleTransform(zoomSlider.Value, zoomSlider.Value, position.X, position.Y));
+                g.Children.Add(new TranslateTransform(-50, -50));
+                canvas.LayoutTransform = g;
+               
+
+                scrollViewer.ScrollToVerticalOffset(position.Y);
+                scrollViewer.ScrollToHorizontalOffset(position.X) ;
+
+                //   canvas.RenderTransform = g;
+
+            }
         }
+        void scrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
+        {
+
+            ScrollViewer scrollViewer = sender as ScrollViewer;
+
+            if (e.ExtentHeightChange != 0 || e.ExtentWidthChange != 0)
+            {
+
+                double xMousePositionOnScrollViewer = Mouse.GetPosition(scrollViewer).X;
+                double yMousePositionOnScrollViewer = Mouse.GetPosition(scrollViewer).Y;
+                double offsetX = e.HorizontalOffset + xMousePositionOnScrollViewer;
+                double offsetY = e.VerticalOffset + yMousePositionOnScrollViewer;
+
+                double oldExtentWidth = e.ExtentWidth - e.ExtentWidthChange;
+                double oldExtentHeight = e.ExtentHeight - e.ExtentHeightChange;
+
+                double relx = offsetX / oldExtentWidth;
+                double rely = offsetY / oldExtentHeight;
+
+                offsetX = Math.Max(relx * e.ExtentWidth - xMousePositionOnScrollViewer, 0);
+                offsetY = Math.Max(rely * e.ExtentHeight - yMousePositionOnScrollViewer, 0);
+
+
+                ScrollViewer scrollViewerTemp = sender as ScrollViewer;
+                scrollViewerTemp.ScrollToHorizontalOffset(offsetX);
+                scrollViewerTemp.ScrollToVerticalOffset(offsetY);
+            }
+        }
+
         private void canvas_MouseMove(object sender, MouseEventArgs e)
         {
             //If drawing
@@ -299,6 +349,22 @@ namespace Paint
                     SetMouseCursor();
                 }
             }
+            else if (_isZooming)
+            {
+                Point position = e.GetPosition(canvas);
+                ////clone shape of preview with selected shape
+                ////IShape rec = new Rectangle();
+                _zoomRectangle = _prototypes["Rectangle"].Clone();
+                ////get current position
+                _zoomRectangle.HandleStart(position.X - 10, position.Y - 10);
+                _zoomRectangle.HandleEnd(position.X + 10, position.Y + 10);
+                DrawAll();
+                //Draw preview
+                _zoomRectangle.PenWidth = _selectedPenWidth;
+                _zoomRectangle.StrokeType = _strokeTypes[_selectedStrokeType];
+                _zoomRectangle.OutlineColor = (Color)ColorGalleryStandard.SelectedColor;
+                canvas.Children.Add(_zoomRectangle.Draw());
+            }
         }
         private void canvas_MouseUp(object sender, MouseButtonEventArgs e)
         {
@@ -317,6 +383,27 @@ namespace Paint
             if (_isDragging)
             {
                 _isDragging = false;
+            }
+            if (_isZooming)
+            {
+                Point position = e.GetPosition(canvas);
+                ////clone shape of preview with selected shape
+                ////IShape rec = new Rectangle();
+                _zoomRectangle = _prototypes["Rectangle"].Clone();
+
+
+                ////get current position
+                _zoomRectangle.HandleStart(position.X - 10 * 2, position.Y - 10 * 2);
+                _zoomRectangle.HandleEnd(position.X + 10 / 2, position.Y + 10 / 2);
+                //Clear all drawings
+                canvas.Children.Clear();
+                //Redraw all shapes that was saved before
+                foreach (var element in _elements)
+                {
+                    canvas.Children.Add(element);
+                }
+                //Draw preview
+                canvas.Children.Add(_zoomRectangle.Draw());
             }
         }
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -423,6 +510,8 @@ namespace Paint
             _selectedShapeName = Btn.Tag as string;
             _preview = _prototypes[_selectedShapeName];
             _selection = "shape";
+            _isZooming = false;
+            //_isDrawing = true;
         }
         private void Export_Click(object sender, RoutedEventArgs e)
         {
@@ -560,7 +649,7 @@ namespace Paint
             _preview = _prototypes["Line"].Clone();
         }
         private void Paint_KeyDown(object sender, KeyEventArgs e)
-        {            
+        {
             if (e.Key == Key.Z && Keyboard.IsKeyDown(Key.LeftCtrl))
             {
                 HandleUndo();
@@ -690,6 +779,38 @@ namespace Paint
         {
             EndEdit();
             _selection = "text";
+        }
+
+        private void zoom_Click(object sender, RoutedEventArgs e)
+        {
+            EndEdit();
+            _selection = "zoom";
+            _isZooming = true;
+            //_isDragging = false;
+            _isDrawing = false;
+        }
+
+        private void zoomSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (dragStarted)
+            {
+                TransformGroup g = new TransformGroup();
+                g.Children.Add(new ScaleTransform(zoomSlider.Value, zoomSlider.Value));
+                g.Children.Add(new TranslateTransform(0,0));
+                canvas.LayoutTransform = g;
+                zoomValue.Text = (zoomSlider.Value*100).ToString()+"%";
+            }
+
+        }
+
+        private void Slider_DragStarted(object sender, System.Windows.Controls.Primitives.DragStartedEventArgs e)
+        {
+            this.dragStarted = true;
+        }
+
+        private void Slider_DragCompleted(object sender, System.Windows.Controls.Primitives.DragCompletedEventArgs e)
+        {
+            this.dragStarted = false;
         }
     }
 }
