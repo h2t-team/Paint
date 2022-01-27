@@ -176,7 +176,7 @@
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
                 </Fluent:RibbonGroupBox>
-                <Fluent:RibbonGroupBox  Name="ToolGroupBox" MinWidth="60" Padding="10">
+                <!--<Fluent:RibbonGroupBox  Name="ToolGroupBox" MinWidth="60" Padding="10">
                     <Fluent:Button 
                     
                         Click="zoom_Click" 
@@ -185,7 +185,7 @@
                             <materialDesign:PackIcon Kind="magnifyPlusOutline"/>
                         </Fluent:Button.LargeIcon>
                     </Fluent:Button>
-                </Fluent:RibbonGroupBox>
+                </Fluent:RibbonGroupBox>-->
             </Fluent:RibbonTabItem>
         </Fluent:Ribbon>
         <Fluent:StatusBar DockPanel.Dock="Bottom">
@@ -200,14 +200,14 @@
             </Fluent:StatusBarItem>
         </Fluent:StatusBar>
         <Grid>
-            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+            <ScrollViewer x:Name="scrollViewer" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Visible" ScrollChanged="scrollViewer_ScrollChanged">
                 <Grid>
                     <Canvas x:Name="canvas" Background="White" Height="460" Width="900">
-                        <Canvas.RenderTransform>
-                            <TransformGroup>
-                                <ScaleTransform x:Name="scaleTransform1" ScaleX="{Binding ElementName=zoomSlider, Path=Value}" ScaleY="{Binding ElementName=zoomSlider, Path=Value}" CenterX="0" CenterY="0"/>
-                            </TransformGroup>
-                        </Canvas.RenderTransform>
+                        <Canvas.LayoutTransform>
+                            
+                                <ScaleTransform x:Name="scaleTransform" ScaleX="{Binding ElementName=zoomSlider, Path=Value}" ScaleY="{Binding ElementName=zoomSlider, Path=Value}" CenterX="0" CenterY="0"/>
+                            
+                        </Canvas.LayoutTransform>
                     </Canvas>
                     <Border 
                         Background="Transparent" 
