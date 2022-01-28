@@ -10,7 +10,7 @@ using System.Windows.Shapes;
 
 namespace Text2D 
 {
-    public class Text2D : IShape, INotifyPropertyChanged
+    public class Text2D : IShape
     {
         private Point2D _start;
         private Point2D _end;
@@ -21,21 +21,7 @@ namespace Text2D
         public DoubleCollection StrokeType { get; set; }
         public Color FillColor { get; set; }
 
-        private string text;
-        public string Text
-        {
-            get
-            {
-                return text;
-            }
-            set
-            {
-                text = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Text"));
-            }
-        }
-
-        public event PropertyChangedEventHandler PropertyChanged;
+        public string Text { get; set; }
 
         public IShape Clone()
         {
@@ -50,7 +36,7 @@ namespace Text2D
                 Height = Math.Abs(_end.Y - _start.Y),
                 Foreground = new SolidColorBrush(OutlineColor),
                 Background = new SolidColorBrush(Colors.Transparent),
-                Text = text
+                Text = Text
             };
             var border = new Border() {
                 BorderThickness = new Thickness(1)

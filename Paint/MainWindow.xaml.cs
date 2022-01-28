@@ -147,7 +147,6 @@ namespace Paint
             {
                 if (MouseHitType == HitType.None)
                 {
-                    Debug.WriteLine(1);
                     EndEdit();
                 }
 
