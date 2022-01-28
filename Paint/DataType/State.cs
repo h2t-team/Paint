@@ -30,6 +30,7 @@ namespace Paint.DataType
                 shape.PenWidth = item.PenWidth;
                 shape.OutlineColor = item.OutlineColor;
                 shape.FillColor = item.FillColor;
+                if (shape.Name == "Text") (shape as Text2D.Text2D).Text = (item as Text2D.Text2D).Text;
                 Shapes.Add(shape);
             }
             Background = background;

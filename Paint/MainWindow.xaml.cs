@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
@@ -145,7 +146,11 @@ namespace Paint
             if (_selection == "shape")
             {
                 if (MouseHitType == HitType.None)
+                {
+                    Debug.WriteLine(1);
                     EndEdit();
+                }
+
                 if (_isEditing)
                 {
                     if (!_isDragging)
@@ -665,13 +670,24 @@ namespace Paint
             {
                 if (e.Key == Key.Back)
                 {
-                    (_preview as Text2D.Text2D).Text = (_preview as Text2D.Text2D).Text.Remove((_preview as Text2D.Text2D).Text.Length - 1, 1);
+                    if ((_preview as Text2D.Text2D).Text.Length > 0)
+                    {
+                        string txt = (_preview as Text2D.Text2D).Text.Remove((_preview as Text2D.Text2D).Text.Length - 1, 1);
+                        (_preview as Text2D.Text2D).Text = txt;
+                        DrawAll();
+                        canvas.Children.Add(_preview.Draw());
+                    }
                     return;
                 }
-                (_preview as Text2D.Text2D).Text += e.Key;
-                DrawAll();
-                canvas.Children.Add((_preview as Text2D.Text2D).Draw());
-                return;
+
+                // accept only the text
+                if (e.Key >= Key.A && e.Key <= Key.Z)
+                {
+                    (_preview as Text2D.Text2D).Text += e.Key;
+                    DrawAll();
+                    canvas.Children.Add(_preview.Draw());
+                    return;
+                }
             }
         }
         private void DrawAll()
@@ -774,8 +790,6 @@ namespace Paint
                 Cursor = Cursors.Cross;
             else if (_selection == "fill")
                 Cursor = new Cursor("format-color-fill.cur");
-            else if (_selection == "text")
-                Cursor = Cursors.IBeam;
         }
         private void ColorGalleryStandard_SelectedColorChanged(object sender, RoutedEventArgs e)
         {

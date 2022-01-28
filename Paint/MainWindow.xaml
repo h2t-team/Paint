@@ -197,7 +197,7 @@
                                   HorizontalAlignment="Right">
                 <Slider VerticalAlignment="Center" Width="200"
                         Margin="0,0,10,0"
-                        x:Name="zoomSlider" ValueChanged="zoomSlider_ValueChanged" 
+                        Name="zoomSlider" ValueChanged="zoomSlider_ValueChanged" 
                         Value="1" Minimum="0.25" Maximum="8" IsSnapToTickEnabled="True" 
                         LargeChange="1" TickFrequency="0.25" SmallChange="0.5"
                         Thumb.DragStarted="Slider_DragStarted"

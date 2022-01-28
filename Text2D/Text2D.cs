@@ -52,7 +52,6 @@ namespace Text2D
                 Background = new SolidColorBrush(Colors.Transparent),
                 Text = text
             };
-            Debug.WriteLine(textBlock.Foreground);
             var border = new Border() {
                 BorderThickness = new Thickness(1)
             };
